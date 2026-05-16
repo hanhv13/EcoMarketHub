@@ -23,7 +23,7 @@ export default function FavoritesPage() {
       const res = await getFavoritesAPI()
       setFavorites(res.data)
     } catch {
-      setError('Không thể tải danh sách yêu thích.')
+      setError('Failed to load favorites.')
     } finally {
       setLoading(false)
     }
@@ -36,19 +36,19 @@ export default function FavoritesPage() {
       // Lọc bỏ sản phẩm vừa xoá khỏi state (không cần gọi lại API)
       setFavorites(prev => prev.filter(f => f.id !== productId))
     } catch {
-      alert('Có lỗi xảy ra, thử lại sau.')
+      alert('An error occurred, please try again.')
     }
   }
 
-  const formatPrice = (p) => Number(p).toLocaleString('vi-VN') + ' đ'
+  const formatPrice = (p) => Number(p).toLocaleString('en-US') + ' VND'
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>
 
   return (
     <div className="container page">
       <div className="page-header">
-        <h1 className="page-title">❤️ Sản phẩm yêu thích</h1>
-        <span style={{ color: '#6b7280', fontSize: '14px' }}>{favorites.length} sản phẩm</span>
+        <h1 className="page-title">❤️ My Favorites</h1>
+        <span style={{ color: '#6b7280', fontSize: '14px' }}>{favorites.length} products</span>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -56,9 +56,9 @@ export default function FavoritesPage() {
       {favorites.length === 0 ? (
         <div className="empty-state">
           <div className="icon">🤍</div>
-          <p>Bạn chưa yêu thích sản phẩm nào.</p>
+          <p>You haven't favorited any products yet.</p>
           <Link to="/" className="btn btn-primary" style={{ marginTop: '16px' }}>
-            Khám phá sản phẩm
+            Explore Products
           </Link>
         </div>
       ) : (
@@ -83,12 +83,12 @@ export default function FavoritesPage() {
                 <div style={styles.meta}>
                   <span style={{ color: '#16a34a', fontWeight: '700' }}>{formatPrice(item.price)}</span>
                   <span style={styles.tag}>{item.category_name}</span>
-                  <span style={styles.tag}>{item.type === 'rent' ? 'Cho thuê' : 'Bán'}</span>
+                  <span style={styles.tag}>{item.type === 'rent' ? 'For Rent' : 'For Sale'}</span>
                   <span style={styles.tag}>👤 {item.seller_name}</span>
                   {/* Nếu tin đã đóng → cảnh báo */}
                   {item.status !== 'active' && (
                     <span style={{ ...styles.tag, background: '#fee2e2', color: '#991b1b' }}>
-                      ⚠️ Tin đã đóng
+                      ⚠️ Closed
                     </span>
                   )}
                 </div>
@@ -98,7 +98,7 @@ export default function FavoritesPage() {
               <button
                 onClick={() => handleRemove(item.id)}
                 style={styles.removeBtn}
-                title="Xoá khỏi yêu thích"
+                title="Remove from favorites"
               >
                 ❌
               </button>

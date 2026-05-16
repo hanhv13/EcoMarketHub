@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: frontend/src/api/auth.js
-// CHỨC NĂNG: Các hàm gọi API liên quan đến Authentication
-// NGƯỜI PHỤ TRÁCH: M4
-// ============================================================
 import api from './axiosInstance'
 
 // Đăng ký tài khoản mới

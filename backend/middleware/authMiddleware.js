@@ -1,11 +1,3 @@
-// ============================================================
-// FILE: backend/middleware/authMiddleware.js
-// CHỨC NĂNG: Kiểm tra token JWT trong header của request
-//            Nếu hợp lệ → cho qua, nếu không → trả lỗi 401
-// CÁCH DÙNG: Thêm vào trước route handler cần bảo vệ
-// NGƯỜI PHỤ TRÁCH: M1
-// ============================================================
-
 const jwt = require('jsonwebtoken'); // Thư viện tạo và kiểm tra JWT token
 
 // Đây là một "middleware" — hàm chạy ở giữa request và response

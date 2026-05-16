@@ -1,66 +1,53 @@
-// ============================================================
-// FILE: backend/controllers/authController.js
-// CHỨC NĂNG: Xử lý logic đăng ký và đăng nhập
-// NGƯỜI PHỤ TRÁCH: M1
-// ============================================================
-
-const bcrypt = require('bcryptjs');  // Thư viện mã hoá mật khẩu
-const jwt    = require('jsonwebtoken'); // Thư viện tạo token
-const db     = require('../config/db'); // Kết nối database
+const bcrypt = require('bcryptjs');  // Password hashing library
+const jwt    = require('jsonwebtoken'); // Token creation library
+const db     = require('../config/db'); // Database connection
 
 // ============================================================
-// ĐĂNG KÝ TÀI KHOẢN MỚI
+// REGISTER NEW ACCOUNT
 // POST /api/auth/register
 // Body: { username, email, password }
 // ============================================================
 const register = async (req, res) => {
     try {
-        // Lấy thông tin từ body request (React gửi lên)
         const { username, email, password } = req.body;
 
-        // Validation cơ bản — kiểm tra thiếu trường
         if (!username || !email || !password) {
-            return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin.' });
+            return res.status(400).json({ message: 'Please provide all required information.' });
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự.' });
+            return res.status(400).json({ message: 'Password must be at least 6 characters.' });
         }
 
-        // Kiểm tra email đã tồn tại chưa
         const [existingUsers] = await db.query(
             'SELECT id FROM users WHERE email = ? OR username = ?',
-            [email, username]  // Dấu ? là placeholder, tránh SQL Injection
+            [email, username]
         );
 
         if (existingUsers.length > 0) {
-            return res.status(409).json({ message: 'Email hoặc tên đăng nhập đã tồn tại.' });
+            return res.status(409).json({ message: 'Email or username already exists.' });
         }
 
-        // Mã hoá mật khẩu trước khi lưu vào DB
-        // 10 là "salt rounds" — càng cao càng an toàn nhưng chậm hơn
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Lưu user mới vào database
         const [result] = await db.query(
             'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
             [username, email, hashedPassword]
         );
 
-        // Trả về thành công (không trả password)
         res.status(201).json({
-            message: 'Đăng ký thành công!',
-            userId: result.insertId  // ID của user vừa tạo
+            message: 'Registration successful!',
+            userId: result.insertId
         });
 
     } catch (error) {
-        console.error('Lỗi đăng ký:', error);
-        res.status(500).json({ message: 'Lỗi server khi đăng ký.' });
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Server error during registration.' });
     }
 };
 
 // ============================================================
-// ĐĂNG NHẬP
+// LOGIN
 // POST /api/auth/login
 // Body: { email, password }
 // ============================================================
@@ -69,79 +56,74 @@ const login = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu.' });
+            return res.status(400).json({ message: 'Please enter email and password.' });
         }
 
-        // Tìm user theo email
         const [users] = await db.query(
             'SELECT * FROM users WHERE email = ?',
             [email]
         );
 
-        // Không tìm thấy user
         if (users.length === 0) {
-            return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng.' });
+            return res.status(401).json({ message: 'Incorrect email or password.' });
         }
 
-        const user = users[0]; // Lấy user đầu tiên (và duy nhất)
+        const user = users[0];
 
-        // So sánh mật khẩu nhập vào với mật khẩu đã mã hoá trong DB
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng.' });
+            return res.status(401).json({ message: 'Incorrect email or password.' });
         }
 
-        // Tạo JWT token — chứa thông tin user (không chứa password!)
         const token = jwt.sign(
             {
                 id: user.id,
                 email: user.email,
-                username: user.username
+                username: user.username,
+                role: user.role
             },
-            process.env.JWT_SECRET,        // Khoá bí mật để ký token
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } // Token hết hạn sau 7 ngày
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
-        // Trả về token và thông tin user cơ bản (React sẽ lưu token vào localStorage)
         res.json({
-            message: 'Đăng nhập thành công!',
+            message: 'Login successful!',
             token,
             user: {
                 id:         user.id,
                 username:   user.username,
                 email:      user.email,
-                avatar_url: user.avatar_url
+                avatar_url: user.avatar_url,
+                role:       user.role
             }
         });
 
     } catch (error) {
-        console.error('Lỗi đăng nhập:', error);
-        res.status(500).json({ message: 'Lỗi server khi đăng nhập.' });
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Server error during login.' });
     }
 };
 
 // ============================================================
-// LẤY THÔNG TIN USER HIỆN TẠI (dùng token để xác thực)
+// GET CURRENT USER INFO
 // GET /api/auth/me
-// Header: Authorization: Bearer <token>
 // ============================================================
 const getMe = async (req, res) => {
     try {
-        // req.user được gắn vào bởi authMiddleware
         const [users] = await db.query(
-            'SELECT id, username, email, avatar_url, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, avatar_url, role, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
 
         if (users.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy user.' });
+            return res.status(404).json({ message: 'User not found.' });
         }
 
         res.json(users[0]);
     } catch (error) {
-        console.error('Lỗi getMe:', error);
-        res.status(500).json({ message: 'Lỗi server.' });
+        console.error('getMe error:', error);
+        res.status(500).json({ message: 'Server error.' });
     }
 };
 

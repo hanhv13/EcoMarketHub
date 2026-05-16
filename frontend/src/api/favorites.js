@@ -1,9 +1,3 @@
-// ============================================================
-// FILE: frontend/src/api/favorites.js
-// CHỨC NĂNG: Các hàm gọi API yêu thích từ React
-// NGƯỜI PHỤ TRÁCH: M4
-// ============================================================
-
 import api from './axiosInstance'
 
 // Lấy danh sách sản phẩm yêu thích của user hiện tại

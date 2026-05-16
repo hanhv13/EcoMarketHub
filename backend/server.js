@@ -35,6 +35,10 @@ const productRoutes  = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const uploadRoutes   = require('./routes/uploadRoutes');
+const eventRoutes    = require('./routes/eventRoutes');
+const reviewRoutes   = require('./routes/reviewRoutes');
+const rentalRoutes   = require('./routes/rentalRoutes');
+
 
 // Gắn routes vào app với prefix URL tương ứng
 app.use('/api/auth',       authRoutes);      // /api/auth/register, /api/auth/login
@@ -42,6 +46,9 @@ app.use('/api/products',   productRoutes);   // /api/products, /api/products/:id
 app.use('/api/categories', categoryRoutes);  // /api/categories
 app.use('/api/favorites',  favoriteRoutes);  // /api/favorites
 app.use('/api/upload',     uploadRoutes);    // /api/upload
+app.use('/api/events',     eventRoutes);     // /api/events
+app.use('/api/reviews',    reviewRoutes);    // /api/reviews
+app.use('/api/rentals',    rentalRoutes);    // /api/rentals
 
 // Bước 5: Route kiểm tra server có chạy không
 app.get('/', (req, res) => {

@@ -44,7 +44,7 @@ export default function LoginPage() {
       navigate('/')        // Chuyển về trang chủ
     } catch (err) {
       // err.response.data.message: thông báo lỗi từ backend
-      setError(err.response?.data?.message || 'Đăng nhập thất bại, thử lại sau.')
+      setError(err.response?.data?.message || 'Login failed, please try again.')
     } finally {
       setLoading(false) // Dù thành công hay lỗi cũng tắt loading
     }
@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>♻️ Đăng nhập SecondNest</h1>
+        <h1 style={styles.title}>♻️ Login to SecondNest</h1>
 
         {/* Hiện thông báo lỗi nếu có */}
         {error && <div className="alert alert-error">{error}</div>}
@@ -73,14 +73,14 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label>Mật khẩu</label>
+            <label>Password</label>
             <input
               className="form-control"
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="Nhập mật khẩu"
+              placeholder="Enter password"
               required
             />
           </div>
@@ -91,12 +91,12 @@ export default function LoginPage() {
             style={{ width: '100%', padding: '12px' }}
             disabled={loading}  // Không cho bấm khi đang gọi API
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <p style={styles.footer}>
-          Chưa có tài khoản? <Link to="/register" style={styles.link}>Đăng ký ngay</Link>
+          Don't have an account? <Link to="/register" style={styles.link}>Sign Up</Link>
         </p>
       </div>
     </div>

@@ -55,7 +55,7 @@ export default function PostProductPage() {
     setError('')
 
     if (!form.title || !form.price || !form.category_id) {
-      return setError('Vui lòng điền đầy đủ tên sản phẩm, giá và danh mục.')
+      return setError('Please provide title, price, and category.')
     }
 
     setLoading(true)
@@ -74,7 +74,7 @@ export default function PostProductPage() {
       // Chuyển đến trang chi tiết sản phẩm vừa tạo
       navigate(`/products/${res.data.product.id}`)
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng tin thất bại, thử lại sau.')
+      setError(err.response?.data?.message || 'Failed to post ad, please try again.')
     } finally {
       setLoading(false)
     }
@@ -83,21 +83,21 @@ export default function PostProductPage() {
   return (
     <div className="container page">
       <div style={styles.card}>
-        <h1 style={styles.title}>📝 Đăng tin mới</h1>
+        <h1 style={styles.title}>📝 Post a New Ad</h1>
 
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           {/* ---- Ảnh sản phẩm ---- */}
           <div className="form-group">
-            <label>Ảnh sản phẩm</label>
+            <label>Product Image</label>
             <div style={styles.imageUploadArea}>
               {imagePreview ? (
                 // Hiển thị preview ảnh đã chọn
                 <img src={imagePreview} alt="Preview" style={styles.preview} />
               ) : (
                 <div style={styles.uploadPlaceholder}>
-                  📷 <br /> Click để chọn ảnh
+                  📷 <br /> Click to select image
                 </div>
               )}
               {/* Input file ẩn đi, click vào div ở trên để mở */}
@@ -109,32 +109,32 @@ export default function PostProductPage() {
               />
             </div>
             <small style={{ color: '#6b7280', fontSize: '12px' }}>
-              Chấp nhận: JPG, PNG, WEBP. Tối đa 5MB.
+              Accepted: JPG, PNG, WEBP. Max 5MB.
             </small>
           </div>
 
           {/* ---- Tên sản phẩm ---- */}
           <div className="form-group">
-            <label>Tên sản phẩm *</label>
+            <label>Title *</label>
             <input className="form-control" type="text" name="title"
               value={form.title} onChange={handleChange}
-              placeholder="VD: Laptop Dell XPS 13 2020" required />
+              placeholder="Ex: Dell XPS 13 2020" required />
           </div>
 
           {/* ---- Loại tin và danh mục (2 cột) ---- */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
-              <label>Loại tin *</label>
+              <label>Type *</label>
               <select className="form-control" name="type" value={form.type} onChange={handleChange}>
-                <option value="sell">Bán</option>
-                <option value="rent">Cho thuê</option>
+                <option value="sell">For Sale</option>
+                <option value="rent">For Rent</option>
               </select>
             </div>
             <div className="form-group">
-              <label>Danh mục *</label>
+              <label>Category *</label>
               <select className="form-control" name="category_id" value={form.category_id}
                 onChange={handleChange} required>
-                <option value="">-- Chọn danh mục --</option>
+                <option value="">-- Select Category --</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -144,18 +144,18 @@ export default function PostProductPage() {
 
           {/* ---- Giá ---- */}
           <div className="form-group">
-            <label>Giá (VNĐ) *</label>
+            <label>Price (VND) *</label>
             <input className="form-control" type="number" name="price"
               value={form.price} onChange={handleChange}
-              placeholder="VD: 5000000" min="0" required />
+              placeholder="Ex: 5000000" min="0" required />
           </div>
 
           {/* ---- Mô tả ---- */}
           <div className="form-group">
-            <label>Mô tả chi tiết</label>
+            <label>Description</label>
             <textarea className="form-control" name="description"
               value={form.description} onChange={handleChange}
-              placeholder="Mô tả tình trạng, lý do bán, thông tin thêm..."
+              placeholder="Condition, reason for selling, additional info..."
               rows={5} style={{ resize: 'vertical' }}
             />
           </div>
@@ -163,11 +163,11 @@ export default function PostProductPage() {
           <div style={{ display: 'flex', gap: '12px' }}>
             <button type="button" className="btn btn-gray"
               style={{ flex: 1 }} onClick={() => navigate(-1)}>
-              Huỷ
+              Cancel
             </button>
             <button type="submit" className="btn btn-primary"
               style={{ flex: 2 }} disabled={loading}>
-              {loading ? 'Đang đăng tin...' : '🚀 Đăng tin ngay'}
+              {loading ? 'Posting...' : '🚀 Submit Ad'}
             </button>
           </div>
         </form>

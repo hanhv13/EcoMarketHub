@@ -1,29 +1,16 @@
-// ============================================================
-// FILE: backend/controllers/productController.js
-// CHỨC NĂNG: Xử lý toàn bộ logic liên quan đến sản phẩm
-//            - Lấy danh sách (có tìm kiếm + lọc)
-//            - Xem chi tiết
-//            - Tạo mới, sửa, xoá
-//            - Lấy tin của 1 user
-// NGƯỜI PHỤ TRÁCH: M2
-// ============================================================
-
 const db = require('../config/db');
 
 // ============================================================
-// LẤY DANH SÁCH SẢN PHẨM (có tìm kiếm + lọc + phân trang)
-// GET /api/products?search=laptop&category=1&type=sell&page=1
+// GET PRODUCT LIST (with search + filter + pagination)
 // ============================================================
 const getAllProducts = async (req, res) => {
     try {
-        // Lấy các tham số filter từ URL query string
-        const { search, category, type, page = 1, limit = 12 } = req.query;
+        const { search, category, type, location, page = 1, limit = 12 } = req.query;
 
-        // Xây dựng câu SQL động dựa trên các filter
         let sql = `
             SELECT
                 p.id, p.title, p.description, p.price, p.image_url,
-                p.type, p.status, p.created_at,
+                p.type, p.status, p.created_at, p.condition, p.location, p.is_premium, p.images,
                 u.id AS seller_id, u.username AS seller_name, u.avatar_url AS seller_avatar,
                 c.id AS category_id, c.name AS category_name
             FROM products p
@@ -32,37 +19,42 @@ const getAllProducts = async (req, res) => {
             WHERE p.status = 'active'
         `;
 
-        const params = []; // Mảng chứa giá trị cho các dấu ?
+        const params = [];
 
-        // Thêm điều kiện tìm kiếm theo từ khoá (tìm trong tên và mô tả)
         if (search) {
             sql += ' AND (p.title LIKE ? OR p.description LIKE ?)';
-            params.push(`%${search}%`, `%${search}%`); // % = wildcard trong SQL
+            params.push(`%${search}%`, `%${search}%`);
         }
 
-        // Thêm điều kiện lọc theo danh mục
         if (category) {
             sql += ' AND p.category_id = ?';
             params.push(parseInt(category));
         }
 
-        // Thêm điều kiện lọc theo loại: sell hoặc rent
         if (type && ['sell', 'rent'].includes(type)) {
             sql += ' AND p.type = ?';
             params.push(type);
         }
 
-        // Sắp xếp mới nhất lên đầu
-        sql += ' ORDER BY p.created_at DESC';
+        if (location) {
+            sql += ' AND p.location = ?';
+            params.push(location);
+        }
 
-        // Phân trang: LIMIT = số sản phẩm mỗi trang, OFFSET = bỏ qua bao nhiêu sản phẩm
+        if (req.query.sortPrice === 'asc') {
+            sql += ' ORDER BY p.price ASC, p.created_at DESC';
+        } else if (req.query.sortPrice === 'desc') {
+            sql += ' ORDER BY p.price DESC, p.created_at DESC';
+        } else {
+            sql += ' ORDER BY p.created_at DESC';
+        }
+
         const offset = (parseInt(page) - 1) * parseInt(limit);
         sql += ' LIMIT ? OFFSET ?';
         params.push(parseInt(limit), offset);
 
         const [products] = await db.query(sql, params);
 
-        // Đếm tổng số sản phẩm (để frontend biết có bao nhiêu trang)
         let countSql = `
             SELECT COUNT(*) AS total
             FROM products p
@@ -81,6 +73,10 @@ const getAllProducts = async (req, res) => {
             countSql += ' AND p.type = ?';
             countParams.push(type);
         }
+        if (location) {
+            countSql += ' AND p.location = ?';
+            countParams.push(location);
+        }
 
         const [countResult] = await db.query(countSql, countParams);
         const total = countResult[0].total;
@@ -96,18 +92,17 @@ const getAllProducts = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Lỗi getAllProducts:', error);
-        res.status(500).json({ message: 'Lỗi server khi lấy danh sách sản phẩm.' });
+        console.error('getAllProducts error:', error);
+        res.status(500).json({ message: 'Server error while fetching products.' });
     }
 };
 
 // ============================================================
-// LẤY CHI TIẾT 1 SẢN PHẨM
-// GET /api/products/:id
+// GET PRODUCT BY ID
 // ============================================================
 const getProductById = async (req, res) => {
     try {
-        const { id } = req.params; // Lấy id từ URL: /api/products/5 → id = '5'
+        const { id } = req.params;
 
         const [products] = await db.query(`
             SELECT
@@ -122,87 +117,83 @@ const getProductById = async (req, res) => {
         `, [id]);
 
         if (products.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy sản phẩm.' });
+            return res.status(404).json({ message: 'Product not found.' });
         }
 
         res.json(products[0]);
 
     } catch (error) {
-        console.error('Lỗi getProductById:', error);
-        res.status(500).json({ message: 'Lỗi server.' });
+        console.error('getProductById error:', error);
+        res.status(500).json({ message: 'Server error.' });
     }
 };
 
 // ============================================================
-// TẠO SẢN PHẨM MỚI (cần đăng nhập)
-// POST /api/products
-// Header: Authorization: Bearer <token>
-// Body: { title, description, price, category_id, type, image_url }
+// CREATE NEW PRODUCT
 // ============================================================
 const createProduct = async (req, res) => {
     try {
-        const { title, description, price, category_id, type, image_url } = req.body;
+        const { title, description, price, category_id, type, image_url, condition, location, is_premium, images } = req.body;
 
-        // Validation
         if (!title || !price || !category_id) {
-            return res.status(400).json({ message: 'Vui lòng nhập tên sản phẩm, giá và danh mục.' });
+            return res.status(400).json({ message: 'Please enter title, price, and category.' });
         }
 
         if (isNaN(price) || parseFloat(price) < 0) {
-            return res.status(400).json({ message: 'Giá không hợp lệ.' });
+            return res.status(400).json({ message: 'Invalid price.' });
         }
 
-        // req.user.id được lấy từ JWT token (authMiddleware đã decode)
         const userId = req.user.id;
 
         const [result] = await db.query(
-            `INSERT INTO products (user_id, category_id, title, description, price, image_url, type)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [userId, category_id, title, description || '', price, image_url || null, type || 'sell']
+            `INSERT INTO products (user_id, category_id, title, description, price, image_url, type, \`condition\`, location, is_premium, images)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                userId, category_id, title, description || '', price, image_url || null, type || 'sell',
+                condition || 'Used', location || 'Vietnam', is_premium || false, images ? JSON.stringify(images) : null
+            ]
         );
 
-        // Lấy sản phẩm vừa tạo để trả về
         const [newProduct] = await db.query(
             'SELECT * FROM products WHERE id = ?',
             [result.insertId]
         );
 
         res.status(201).json({
-            message: 'Đăng tin thành công!',
+            message: 'Product posted successfully!',
             product: newProduct[0]
         });
 
     } catch (error) {
-        console.error('Lỗi createProduct:', error);
-        res.status(500).json({ message: 'Lỗi server khi tạo sản phẩm.' });
+        console.error('createProduct error:', error);
+        res.status(500).json({ message: 'Server error while creating product.' });
     }
 };
 
 // ============================================================
-// CẬP NHẬT SẢN PHẨM (chỉ chủ tin mới được sửa)
-// PUT /api/products/:id
+// UPDATE PRODUCT
 // ============================================================
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
-        // Kiểm tra sản phẩm có tồn tại và có phải của user này không
         const [products] = await db.query(
             'SELECT * FROM products WHERE id = ? AND user_id = ?',
             [id, userId]
         );
 
         if (products.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy sản phẩm hoặc bạn không có quyền sửa.' });
+            return res.status(404).json({ message: 'Product not found or access denied.' });
         }
 
-        const { title, description, price, category_id, type, image_url, status } = req.body;
+        const { title, description, price, category_id, type, image_url, status, condition, location, is_premium, images } = req.body;
 
         await db.query(
             `UPDATE products
              SET title = ?, description = ?, price = ?, category_id = ?,
-                 type = ?, image_url = ?, status = ?
+                 type = ?, image_url = ?, status = ?, \`condition\` = ?,
+                 location = ?, is_premium = ?, images = ?
              WHERE id = ? AND user_id = ?`,
             [
                 title       || products[0].title,
@@ -212,50 +203,51 @@ const updateProduct = async (req, res) => {
                 type        || products[0].type,
                 image_url   !== undefined ? image_url : products[0].image_url,
                 status      || products[0].status,
+                condition   || products[0].condition,
+                location    || products[0].location,
+                is_premium  !== undefined ? is_premium : products[0].is_premium,
+                images      ? JSON.stringify(images) : products[0].images,
                 id, userId
             ]
         );
 
-        res.json({ message: 'Cập nhật tin thành công!' });
+        res.json({ message: 'Product updated successfully!' });
 
     } catch (error) {
-        console.error('Lỗi updateProduct:', error);
-        res.status(500).json({ message: 'Lỗi server khi cập nhật.' });
+        console.error('updateProduct error:', error);
+        res.status(500).json({ message: 'Server error while updating.' });
     }
 };
 
 // ============================================================
-// XOÁ SẢN PHẨM (chỉ chủ tin mới được xoá)
-// DELETE /api/products/:id
+// DELETE PRODUCT
 // ============================================================
 const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
-        // Kiểm tra quyền sở hữu
         const [products] = await db.query(
             'SELECT id FROM products WHERE id = ? AND user_id = ?',
             [id, userId]
         );
 
         if (products.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy sản phẩm hoặc bạn không có quyền xoá.' });
+            return res.status(404).json({ message: 'Product not found or access denied.' });
         }
 
         await db.query('DELETE FROM products WHERE id = ?', [id]);
 
-        res.json({ message: 'Xoá tin thành công!' });
+        res.json({ message: 'Product deleted successfully!' });
 
     } catch (error) {
-        console.error('Lỗi deleteProduct:', error);
-        res.status(500).json({ message: 'Lỗi server khi xoá.' });
+        console.error('deleteProduct error:', error);
+        res.status(500).json({ message: 'Server error while deleting.' });
     }
 };
 
 // ============================================================
-// LẤY TIN ĐĂNG CỦA 1 USER (Trang "Tin của tôi")
-// GET /api/products/user/:userId
+// GET PRODUCTS BY USER
 // ============================================================
 const getProductsByUser = async (req, res) => {
     try {
@@ -272,8 +264,34 @@ const getProductsByUser = async (req, res) => {
         res.json(products);
 
     } catch (error) {
-        console.error('Lỗi getProductsByUser:', error);
-        res.status(500).json({ message: 'Lỗi server.' });
+        console.error('getProductsByUser error:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
+};
+
+
+// ============================================================
+// GET CATEGORIES WITH PRODUCT COUNT
+// Returns each category with how many active products it has
+// ============================================================
+const getCategoriesWithCount = async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT
+                c.id,
+                c.name,
+                COUNT(p.id) AS product_count
+            FROM categories c
+            LEFT JOIN products p ON p.category_id = c.id AND p.status = 'active'
+            GROUP BY c.id, c.name
+            ORDER BY
+                CASE WHEN LOWER(c.name) LIKE '%other%' THEN 1 ELSE 0 END ASC,
+                c.id ASC
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error('getCategoriesWithCount error:', error);
+        res.status(500).json({ message: 'Server error.' });
     }
 };
 
@@ -283,5 +301,6 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
-    getProductsByUser
+    getProductsByUser,
+    getCategoriesWithCount
 };

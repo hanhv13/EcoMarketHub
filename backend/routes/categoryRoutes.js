@@ -1,12 +1,8 @@
-// ============================================================
-// FILE: backend/routes/categoryRoutes.js
-// NGƯỜI PHỤ TRÁCH: M2
-// ============================================================
 const express = require('express');
 const router  = express.Router();
 const db      = require('../config/db');
 
-// GET /api/categories — Lấy toàn bộ danh mục (để hiển thị dropdown lọc)
+// GET /api/categories
 router.get('/', async (req, res) => {
     try {
         const [categories] = await db.query(

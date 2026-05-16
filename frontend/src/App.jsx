@@ -1,14 +1,12 @@
 // ============================================================
 // FILE: frontend/src/App.jsx
-// CHỨC NĂNG: Khai báo toàn bộ routes (đường dẫn trang) của app
-//            Bọc toàn bộ app trong AuthProvider để chia sẻ state đăng nhập
-// NGƯỜI PHỤ TRÁCH: M3
+// FUNCTION: Declare all routes of the application
+//            Wraps the entire app in AuthProvider to share login state
 // ============================================================
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-// Import tất cả các trang
 import Navbar           from './components/Navbar'
 import ProductListPage  from './pages/ProductListPage'
 import ProductDetailPage from './pages/ProductDetailPage'
@@ -17,55 +15,66 @@ import RegisterPage     from './pages/RegisterPage'
 import PostProductPage  from './pages/PostProductPage'
 import MyListingsPage   from './pages/MyListingsPage'
 import FavoritesPage    from './pages/FavoritesPage'
+import CartPage         from './pages/CartPage'
+import GreenhubPage     from './pages/GreenhubPage'
+import RewardsPage      from './pages/RewardsPage'
+import EventPage        from './pages/EventPage'
+import Footer           from './components/Footer'
 
 // ============================================================
-// PrivateRoute: bảo vệ các trang cần đăng nhập
-// Nếu chưa đăng nhập → chuyển sang trang /login
+// PrivateRoute: protect pages that require login
+// If not logged in → redirect to /login
 // ============================================================
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
 
-  // Đang kiểm tra token → chờ, chưa render gì
+  // Checking token → wait, don't render yet
   if (loading) return <div className="loading"><div className="spinner"></div></div>
 
-  // Chưa đăng nhập → redirect về login
+  // Not logged in → redirect to login
   if (!user) return <Navigate to="/login" replace />
 
-  // Đã đăng nhập → render trang bình thường
+  // Logged in → render page normally
   return children
 }
 
 // ============================================================
-// Component chính — định nghĩa cấu trúc app
+// Main Component — defines the app structure
 // ============================================================
 function AppContent() {
   return (
-    // BrowserRouter: kích hoạt React Router, quản lý URL trong trình duyệt
     <BrowserRouter>
-      {/* Navbar hiển thị ở mọi trang */}
+      {/* Navbar displayed on all pages */}
       <Navbar />
 
-      {/* Routes: chỉ render route nào khớp với URL hiện tại */}
+      {/* Routes: only render the route that matches the current URL */}
       <Routes>
-        {/* Trang công khai (ai cũng vào được) */}
+        {/* Public Routes (accessible to everyone) */}
         <Route path="/"          element={<ProductListPage />} />
         <Route path="/products/:id" element={<ProductDetailPage />} />
         <Route path="/login"     element={<LoginPage />} />
         <Route path="/register"  element={<RegisterPage />} />
+        <Route path="/cart"      element={<CartPage />} />
 
-        {/* Trang riêng tư (cần đăng nhập) */}
+        {/* Private Routes (require login) */}
         <Route path="/post"      element={<PrivateRoute><PostProductPage /></PrivateRoute>} />
         <Route path="/my-listings" element={<PrivateRoute><MyListingsPage /></PrivateRoute>} />
         <Route path="/favorites" element={<PrivateRoute><FavoritesPage /></PrivateRoute>} />
+        <Route path="/greenhub"  element={<PrivateRoute><GreenhubPage /></PrivateRoute>} />
+        <Route path="/rewards"   element={<PrivateRoute><RewardsPage /></PrivateRoute>} />
+        <Route path="/events"    element={<PrivateRoute><EventPage /></PrivateRoute>} />
 
-        {/* Nếu URL không khớp bất kỳ route nào → về trang chủ */}
+        {/* If URL doesn't match any route → go home */}
         <Route path="*"          element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Footer displayed on all pages */}
+      <Footer />
     </BrowserRouter>
   )
 }
 
-// Export App bọc trong AuthProvider
+// Export App wrapped in AuthProvider
 export default function App() {
   return (
     <AuthProvider>

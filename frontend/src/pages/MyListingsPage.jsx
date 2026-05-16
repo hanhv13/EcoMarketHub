@@ -36,7 +36,7 @@ export default function MyListingsPage() {
       const res = await getProductsByUserAPI(user.id)
       setProducts(res.data)
     } catch {
-      setError('Không thể tải danh sách tin của bạn.')
+      setError('Failed to load your listings.')
     } finally {
       setLoading(false)
     }
@@ -63,7 +63,7 @@ export default function MyListingsPage() {
       setEditing(null)    // Đóng modal
       fetchMyListings()   // Tải lại danh sách
     } catch (err) {
-      alert(err.response?.data?.message || 'Cập nhật thất bại.')
+      alert(err.response?.data?.message || 'Update failed.')
     } finally {
       setEditLoading(false)
     }
@@ -72,7 +72,7 @@ export default function MyListingsPage() {
   // Xoá sản phẩm (có confirm trước)
   const handleDelete = async (product) => {
     // window.confirm: hộp thoại xác nhận, trả về true/false
-    const confirmed = window.confirm(`Bạn chắc chắn muốn xoá tin "${product.title}"?`)
+    const confirmed = window.confirm(`Are you sure you want to delete "${product.title}"?`)
     if (!confirmed) return
 
     try {
@@ -80,20 +80,20 @@ export default function MyListingsPage() {
       // Xoá khỏi state local (không cần gọi lại API)
       setProducts(prev => prev.filter(p => p.id !== product.id))
     } catch (err) {
-      alert(err.response?.data?.message || 'Xoá thất bại.')
+      alert(err.response?.data?.message || 'Delete failed.')
     }
   }
 
-  const formatPrice = (p) => Number(p).toLocaleString('vi-VN') + ' đ'
-  const formatDate  = (d) => new Date(d).toLocaleDateString('vi-VN')
+  const formatPrice = (p) => Number(p).toLocaleString('en-US') + ' VND'
+  const formatDate  = (d) => new Date(d).toLocaleDateString('en-US')
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>
 
   return (
     <div className="container page">
       <div className="page-header">
-        <h1 className="page-title">📋 Tin của tôi</h1>
-        <Link to="/post" className="btn btn-primary">+ Đăng tin mới</Link>
+        <h1 className="page-title">📋 My Listings</h1>
+        <Link to="/post" className="btn btn-primary">+ Post New Ad</Link>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -101,9 +101,9 @@ export default function MyListingsPage() {
       {products.length === 0 ? (
         <div className="empty-state">
           <div className="icon">📭</div>
-          <p>Bạn chưa đăng tin nào.</p>
+          <p>You haven't posted any ads yet.</p>
           <Link to="/post" className="btn btn-primary" style={{ marginTop: '16px' }}>
-            Đăng tin đầu tiên
+            Post your first ad
           </Link>
         </div>
       ) : (
@@ -129,7 +129,7 @@ export default function MyListingsPage() {
                     background: product.status === 'active' ? '#dcfce7' : '#fee2e2',
                     color: product.status === 'active' ? '#166534' : '#991b1b',
                   }}>
-                    {product.status === 'active' ? '✅ Đang hiển thị' : '❌ Đã ẩn'}
+                    {product.status === 'active' ? '✅ Active' : '❌ Hidden'}
                   </span>
                   <span style={styles.metaTag}>{formatDate(product.created_at)}</span>
                 </div>
@@ -138,15 +138,15 @@ export default function MyListingsPage() {
               {/* Nút hành động */}
               <div style={styles.itemActions}>
                 <Link to={`/products/${product.id}`} className="btn btn-outline" style={{ fontSize: '13px' }}>
-                  Xem
+                  View
                 </Link>
                 <button className="btn btn-gray" style={{ fontSize: '13px' }}
                   onClick={() => openEdit(product)}>
-                  ✏️ Sửa
+                  ✏️ Edit
                 </button>
                 <button className="btn btn-danger" style={{ fontSize: '13px' }}
                   onClick={() => handleDelete(product)}>
-                  🗑️ Xoá
+                  🗑️ Delete
                 </button>
               </div>
             </div>
@@ -160,22 +160,22 @@ export default function MyListingsPage() {
         <div style={styles.overlay} onClick={() => setEditing(null)}>
           {/* Ngăn click trong modal làm đóng overlay */}
           <div style={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>✏️ Sửa tin đăng</h2>
+            <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>✏️ Edit Ad</h2>
 
             <div className="form-group">
-              <label>Tên sản phẩm</label>
+              <label>Title</label>
               <input className="form-control" value={editForm.title}
                 onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="form-group">
-                <label>Giá (VNĐ)</label>
+                <label>Price (VND)</label>
                 <input className="form-control" type="number" value={editForm.price}
                   onChange={e => setEditForm(p => ({ ...p, price: e.target.value }))} />
               </div>
               <div className="form-group">
-                <label>Danh mục</label>
+                <label>Category</label>
                 <select className="form-control" value={editForm.category_id}
                   onChange={e => setEditForm(p => ({ ...p, category_id: e.target.value }))}>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -185,35 +185,35 @@ export default function MyListingsPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="form-group">
-                <label>Loại tin</label>
+                <label>Type</label>
                 <select className="form-control" value={editForm.type}
                   onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))}>
-                  <option value="sell">Bán</option>
-                  <option value="rent">Cho thuê</option>
+                  <option value="sell">For Sale</option>
+                  <option value="rent">For Rent</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Trạng thái</label>
+                <label>Status</label>
                 <select className="form-control" value={editForm.status}
                   onChange={e => setEditForm(p => ({ ...p, status: e.target.value }))}>
-                  <option value="active">Đang hiển thị</option>
-                  <option value="hidden">Ẩn tin</option>
-                  <option value="sold">Đã bán</option>
+                  <option value="active">Active</option>
+                  <option value="hidden">Hidden</option>
+                  <option value="sold">Sold</option>
                 </select>
               </div>
             </div>
 
             <div className="form-group">
-              <label>Mô tả</label>
+              <label>Description</label>
               <textarea className="form-control" rows={4} value={editForm.description}
                 onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
                 style={{ resize: 'vertical' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-gray" onClick={() => setEditing(null)}>Huỷ</button>
+              <button className="btn btn-gray" onClick={() => setEditing(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleEditSave} disabled={editLoading}>
-                {editLoading ? 'Đang lưu...' : '💾 Lưu thay đổi'}
+                {editLoading ? 'Saving...' : '💾 Save Changes'}
               </button>
             </div>
           </div>

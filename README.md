@@ -1,204 +1,129 @@
-# ♻️ SecondNest — Web Mua Bán Đồ 2nd Hand
-
-> **Dành cho nhóm mới bắt đầu** — Đọc kỹ từng bước, làm đúng thứ tự!
-
+# ♻️ EcoMarketHub 
 ---
 
 ## 📁 Cấu Trúc Thư Mục
 
-```
-secondnest/
-├── database/           ← File SQL (M1 + M2 phụ trách)
-│   ├── schema.sql      ← Tạo cấu trúc database
-│   └── seed.sql        ← Chèn dữ liệu mẫu
+```text
+ecomarkethub/
+├── database/           ← Chứa file SQL khởi tạo (Schema & Seed)
+│   ├── schema.sql      ← Cấu trúc các bảng (users, products, events, reviews...)
+│   └── clean_database.sql ← Xóa & Chèn dữ liệu mẫu
 │
-├── backend/            ← Node.js + Express (M1 + M2)
-│   ├── server.js
-│   ├── config/db.js
-│   ├── middleware/
-│   ├── routes/
-│   └── controllers/
+├── backend/            ← Node.js + Express
+│   ├── server.js       ← Điểm vào của server
+│   ├── config/db.js    ← Kết nối MySQL
+│   ├── middleware/     ← Xác thực token JWT
+│   ├── routes/         ← Chứa các endpoint (auth, product, rental, event, review...)
+│   └── controllers/    ← Xử lý logic API tương ứng với các route
 │
-└── frontend/           ← React (M3 + M4)
+└── frontend/           ← React (Vite)
     ├── src/
-    │   ├── api/
-    │   ├── context/
-    │   ├── components/
-    │   └── pages/
-    └── ...
+    │   ├── api/        ← Các hàm gọi API thông qua Axios
+    │   ├── components/ ← Component dùng chung (Navbar, Footer, ProductCard...)
+    │   └── pages/      ← Các trang giao diện chính (Home, Product Detail, Cart, Rewards...)
 ```
 
 ---
 
-## 🔧 Cài Đặt Lần Đầu (Làm 1 Lần Duy Nhất)
+## 🔧 Hướng Dẫn Cài Đặt & Khởi Chạy (Làm 1 Lần)
 
-### Bước 1: Cài đặt phần mềm
+### Bước 1: Yêu cầu phần mềm
+- **Node.js** (v18 hoặc v20 - bản LTS)
+- **MySQL Server** và **MySQL Workbench**
+- **Git** & **VS Code**
 
-Cài theo thứ tự:
-1. [Node.js](https://nodejs.org/) — chọn bản LTS (18 hoặc 20)
-2. [MySQL Workbench + MySQL Server](https://dev.mysql.com/downloads/workbench/)
-3. [VS Code](https://code.visualstudio.com/)
-4. [Git](https://git-scm.com/downloads)
-5. [Postman](https://www.postman.com/downloads/)
+### Bước 2: Khởi tạo Database
+1. Mở **MySQL Workbench** và kết nối vào MySQL Server local.
+2. Tạo schema mới bằng lệnh: `CREATE DATABASE secondnest;`
+3. Mở và chạy file `database/schema.sql` (bấm nút ⚡ Execute) để tạo cấu trúc các bảng.
+4. Mở và chạy file `database/clean_database.sql` (bấm nút ⚡ Execute) để thêm dữ liệu mẫu.
+*(Kiểm tra cột bên trái, nếu thấy database `secondnest` có đủ các bảng là thành công)*
 
-Kiểm tra đã cài xong:
+### Bước 3: Cài đặt Backend
 ```bash
-node --version    # Phải ra: v18.x.x hoặc cao hơn
-npm --version     # Phải ra: 9.x.x hoặc cao hơn
-git --version     # Phải ra: git version 2.x.x
-```
+# 1. Di chuyển vào thư mục backend
+cd backend
 
----
-
-### Bước 2: Tạo Database (M1 làm)
-
-1. Mở **MySQL Workbench**
-2. Kết nối vào MySQL Server local
-3. Click **File → Open SQL Script** → chọn file `database/schema.sql`
-4. Bấm **⚡ Execute** (hoặc Ctrl+Shift+Enter)
-5. Mở tiếp `database/seed.sql` → Execute để có dữ liệu mẫu
-6. Kiểm tra: bên trái thấy database `secondnest` với 4 bảng là thành công ✅
-
----
-
-### Bước 3: Cài đặt và chạy Backend (M1 làm)
-
-```bash
-# 1. Vào thư mục backend
-cd secondnest/backend
-
-# 2. Cài thư viện
+# 2. Cài đặt các thư viện cần thiết
 npm install
 
-# 3. Tạo file .env (copy từ file mẫu)
-# Windows:
+# 3. Tạo file cấu hình môi trường
+# Trên Windows:
 copy .env.example .env
-# Mac/Linux:
+# Trên Mac/Linux:
 cp .env.example .env
-
-# 4. Mở file .env và điền mật khẩu MySQL của máy bạn vào DB_PASSWORD
-# Dùng VS Code: code .env
-
-# 5. Chạy server
+```
+- Mở file `.env` vừa tạo, cập nhật thông tin `DB_PASSWORD` cho đúng với mật khẩu MySQL của máy bạn.
+- Chạy backend: 
+```bash
 npm run dev
 ```
+✅ **Thành công** khi thấy dòng chữ: `Server đang chạy tại http://localhost:5000` và `Kết nối MySQL thành công!`
 
-✅ **Thành công** khi thấy:
-```
-✅ Server đang chạy tại http://localhost:5000
-✅ Kết nối MySQL thành công!
-```
-
-**Test nhanh:** Mở trình duyệt, vào `http://localhost:5000` → thấy JSON là OK.
-
----
-
-### Bước 4: Cài đặt và chạy Frontend (M3 làm)
-
-**Mở terminal MỚI** (để backend vẫn chạy ở terminal kia):
-
+### Bước 4: Cài đặt Frontend
+*(Mở một terminal MỚI để backend vẫn tiếp tục chạy)*
 ```bash
-# 1. Vào thư mục frontend
-cd secondnest/frontend
+# 1. Di chuyển vào thư mục frontend
+cd frontend
 
-# 2. Cài thư viện
+# 2. Cài đặt các thư viện cần thiết
 npm install
 
-# 3. Tạo file .env
-# Windows:
+# 3. Tạo file cấu hình môi trường
+# Trên Windows:
 copy .env.example .env
-# Mac/Linux:
+# Trên Mac/Linux:
 cp .env.example .env
-
-# 4. Chạy React app
-npm run dev
 ```
-
-✅ **Thành công** khi thấy:
-```
-VITE v4.x.x  ready in xxx ms
-➜  Local:   http://localhost:5173/
-```
-
-Mở trình duyệt vào `http://localhost:5173` → thấy trang SecondNest là xong! 🎉
-
----
-
-## 🔄 Mỗi Ngày Làm Việc
-
+- Chạy frontend:
 ```bash
-# Terminal 1 — Chạy backend
-cd secondnest/backend
-npm run dev
-
-# Terminal 2 — Chạy frontend
-cd secondnest/frontend
 npm run dev
 ```
-
-Luôn chạy **cả hai** cùng lúc mới dùng được đầy đủ!
-
----
-
-## 🧪 Test API Bằng Postman
-
-Import collection Postman và test theo thứ tự:
-
-### Auth APIs
-```
-POST http://localhost:5000/api/auth/register
-Body (JSON): { "username": "test", "email": "test@mail.com", "password": "123456" }
-
-POST http://localhost:5000/api/auth/login
-Body (JSON): { "email": "test@mail.com", "password": "123456" }
-→ Copy token từ response để dùng cho các API dưới
-```
-
-### Product APIs
-```
-GET  http://localhost:5000/api/products
-GET  http://localhost:5000/api/products?search=laptop&category=1
-GET  http://localhost:5000/api/products/1
-
-POST http://localhost:5000/api/products
-Header: Authorization: Bearer <token>
-Body:  { "title": "Test", "price": 100000, "category_id": 1, "type": "sell" }
-```
+✅ **Thành công** khi có link Localhost (thường là `http://localhost:5173`). Mở trình duyệt và trải nghiệm!
 
 ---
 
-## ❗ Lỗi Thường Gặp & Cách Xử Lý
+## 🌟 Các Tính Năng Đã Hoàn Thiện
 
-| Lỗi | Nguyên nhân | Cách xử lý |
-|-----|-------------|------------|
-| `ER_ACCESS_DENIED_ERROR` | Sai mật khẩu MySQL | Kiểm tra DB_PASSWORD trong file .env |
-| `ECONNREFUSED 3306` | MySQL chưa chạy | Khởi động MySQL Server |
-| `CORS Error` trên React | Backend chưa config CORS | Kiểm tra FRONTEND_URL trong .env backend |
-| `Cannot find module` | Chưa `npm install` | Chạy `npm install` trong thư mục đó |
-| Port 5000 bị dùng | Có app khác dùng port | Đổi PORT trong .env thành 5001 |
-
----
-
-## 📋 Tính Năng Đã Hoàn Thiện
-
-- ✅ Đăng ký / Đăng nhập (JWT Authentication)
-- ✅ Xem danh sách sản phẩm (có phân trang)
-- ✅ Tìm kiếm theo từ khoá
-- ✅ Lọc theo danh mục và loại (bán/thuê)
-- ✅ Xem chi tiết sản phẩm
-- ✅ Đăng tin mới + upload ảnh
-- ✅ Sửa / Xoá tin đã đăng
-- ✅ Yêu thích / Bỏ yêu thích sản phẩm
-- ✅ Trang quản lý tin của tôi
-- ✅ Trang danh sách yêu thích
+1. **Xác thực Người Dùng:**
+   - Đăng ký, Đăng nhập bảo mật bằng JWT.
+   - Phân quyền User và Admin.
+2. **Quản lý & Hiển thị Sản phẩm:** 
+   - Đăng tin bán / cho thuê sản phẩm (có upload ảnh).
+   - Quản lý kho hàng cá nhân (Sửa/Xóa tin).
+3. **Trải nghiệm Mua Sắm & Tìm Kiếm:**
+   - Hiển thị danh mục nổi bật (Top 4 Category).
+   - Tìm kiếm, lọc theo danh mục, sắp xếp giá (Thấp -> Cao, Cao -> Thấp).
+   - Đánh dấu sản phẩm yêu thích (Favorites).
+   - Giỏ hàng (Cart) và quy trình Checkout.
+4. **Hệ Thống Thuê Mượn (Rental Scheduling):**
+   - Đặt lịch thuê sản phẩm theo ngày.
+   - Tự động chặn các ngày đã có người đặt trước để tránh trùng lặp.
+5. **Cộng đồng & Sự kiện (GreenHub):**
+   - Xem và tham gia các Workshop, sự kiện trao đổi đồ cũ.
+   - Hệ thống điểm thưởng (Rewards).
+6. **Đánh giá & Phản hồi (Reviews):**
+   - Cho phép người mua đánh giá người bán (Rating từ 1-5 sao và Comment).
 
 ---
 
-## 👥 Phân Công
+## 🧪 Test API Cơ Bản Bằng Postman
 
-| Thành viên | Phụ trách |
-|------------|-----------|
-| M1 - Hưng  | database/schema.sql · config/db.js · authController · authRoutes · uploadRoutes · middleware |
-| M2 - Hà Anh | database/seed.sql · productController · favoriteController · categoryRoutes · productRoutes |
-| M3 - Bùi Đức | Navbar · ProductCard · LoginPage · RegisterPage · ProductListPage · ProductDetailPage · PostProductPage |
-| M4 - Bảo  | AuthContext · axiosInstance · api/*.js · MyListingsPage · FavoritesPage · README · Deploy |
+**1. Authentication:**
+- `POST http://localhost:5000/api/auth/register`
+  *Body (JSON):* `{ "username": "testuser", "email": "test@mail.com", "password": "123456" }`
+- `POST http://localhost:5000/api/auth/login`
+  *Body (JSON):* `{ "email": "test@mail.com", "password": "123456" }`
+  *(Copy Token trong Response trả về để dùng cho các API yêu cầu xác thực)*
+
+**2. Products:**
+- `GET http://localhost:5000/api/products` (Lấy tất cả sản phẩm)
+- `GET http://localhost:5000/api/products?search=laptop&category=1&sort=price_asc` (Tìm kiếm & Lọc)
+
+**3. Rentals (Yêu cầu Token):**
+- `POST http://localhost:5000/api/rentals/book`
+  *Header:* `Authorization: Bearer <token>`
+  *Body (JSON):* `{ "product_id": 1, "start_date": "2026-06-01", "end_date": "2026-06-05" }`
+
+**4. Events (Sự kiện GreenHub):**
+- `GET http://localhost:5000/api/events`

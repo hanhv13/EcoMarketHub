@@ -1,11 +1,3 @@
-// ============================================================
-// FILE: frontend/src/api/axiosInstance.js
-// CHỨC NĂNG: Tạo 1 instance Axios được cấu hình sẵn
-//            - Base URL trỏ vào backend
-//            - Tự động gắn token JWT vào mọi request
-// NGƯỜI PHỤ TRÁCH: M4
-// ============================================================
-
 import axios from 'axios'
 
 // Tạo instance Axios với cấu hình mặc định

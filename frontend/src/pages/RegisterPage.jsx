@@ -27,10 +27,10 @@ export default function RegisterPage() {
 
     // Kiểm tra mật khẩu xác nhận
     if (form.password !== form.confirm) {
-      return setError('Mật khẩu xác nhận không khớp.')
+      return setError('Passwords do not match.')
     }
     if (form.password.length < 6) {
-      return setError('Mật khẩu phải có ít nhất 6 ký tự.')
+      return setError('Password must be at least 6 characters.')
     }
 
     setLoading(true)
@@ -41,11 +41,11 @@ export default function RegisterPage() {
         password: form.password,
       })
 
-      setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...')
+      setSuccess('Registration successful! Redirecting to login...')
       // Đợi 1.5s rồi chuyển trang để user đọc thông báo
       setTimeout(() => navigate('/login'), 1500)
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng ký thất bại, thử lại sau.')
+      setError(err.response?.data?.message || 'Registration failed, please try again.')
     } finally {
       setLoading(false)
     }
@@ -54,17 +54,17 @@ export default function RegisterPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>♻️ Đăng ký SecondNest</h1>
+        <h1 style={styles.title}>♻️ Sign Up for SecondNest</h1>
 
         {error   && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Tên đăng nhập</label>
+            <label>Username</label>
             <input className="form-control" type="text" name="username"
               value={form.username} onChange={handleChange}
-              placeholder="VD: nguyen_van_a" required />
+              placeholder="Ex: john_doe" required />
           </div>
           <div className="form-group">
             <label>Email</label>
@@ -73,26 +73,26 @@ export default function RegisterPage() {
               placeholder="email@example.com" required />
           </div>
           <div className="form-group">
-            <label>Mật khẩu</label>
+            <label>Password</label>
             <input className="form-control" type="password" name="password"
               value={form.password} onChange={handleChange}
-              placeholder="Ít nhất 6 ký tự" required />
+              placeholder="At least 6 characters" required />
           </div>
           <div className="form-group">
-            <label>Xác nhận mật khẩu</label>
+            <label>Confirm Password</label>
             <input className="form-control" type="password" name="confirm"
               value={form.confirm} onChange={handleChange}
-              placeholder="Nhập lại mật khẩu" required />
+              placeholder="Confirm your password" required />
           </div>
 
           <button type="submit" className="btn btn-primary"
             style={{ width: '100%', padding: '12px' }} disabled={loading}>
-            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+            {loading ? 'Processing...' : 'Sign Up'}
           </button>
         </form>
 
         <p style={styles.footer}>
-          Đã có tài khoản? <Link to="/login" style={styles.link}>Đăng nhập</Link>
+          Already have an account? <Link to="/login" style={styles.link}>Login</Link>
         </p>
       </div>
     </div>

@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: frontend/src/api/products.js
-// CHỨC NĂNG: Các hàm gọi API liên quan đến sản phẩm
-// NGƯỜI PHỤ TRÁCH: M4
-// ============================================================
 import api from './axiosInstance'
 
 // Lấy danh sách sản phẩm (có thể kèm filter)
@@ -30,9 +25,13 @@ export const deleteProductAPI = (id) =>
 export const getProductsByUserAPI = (userId) =>
   api.get(`/api/products/user/${userId}`)
 
-// Lấy tất cả danh mục
+// Get all categories
 export const getCategoriesAPI = () =>
   api.get('/api/categories')
+
+// Get all categories with their active product count
+export const getCategoriesWithCountAPI = () =>
+  api.get('/api/products/categories-with-count')
 
 // Upload ảnh sản phẩm
 // imageFile: File object từ <input type="file">
