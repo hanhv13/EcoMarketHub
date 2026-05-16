@@ -25,7 +25,24 @@ ecomarkethub/
 
 ---
 
-## 🔧 Hướng Dẫn Cài Đặt & Khởi Chạy (Làm 1 Lần)
+## 🐳 Khởi Chạy Nhanh Bằng Docker (Khuyên Dùng)
+
+Cách nhanh nhất để chạy toàn bộ dự án mà không cần cài đặt Node.js hay MySQL trên máy.
+
+1. Cài đặt **[Docker Desktop](https://www.docker.com/products/docker-desktop)**.
+2. Mở Terminal tại thư mục gốc của dự án (`ecomarkethub/`) và chạy:
+   ```bash
+   docker compose up -d
+   ```
+3. Chờ một lát để Docker tải image và tự động khởi tạo Database kèm dữ liệu mẫu. Sau đó truy cập:
+   - **Frontend (Giao diện Web):** [http://localhost:5173](http://localhost:5173)
+   - **Backend (API):** [http://localhost:5000](http://localhost:5000)
+
+*(Để xem log nếu có lỗi, chạy: `docker compose logs -f`. Để dừng toàn bộ server, chạy: `docker compose down`)*
+
+---
+
+## 🔧 Hướng Dẫn Cài Đặt Thủ Công (Không dùng Docker)
 
 ### Bước 1: Yêu cầu phần mềm
 - **Node.js** (v18 hoặc v20 - bản LTS)
