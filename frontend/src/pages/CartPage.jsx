@@ -1,31 +1,15 @@
 // ============================================================
 // FILE: frontend/src/pages/CartPage.jsx
-// CHỨC NĂNG: Trang giỏ hàng & thanh toán (Khung giao diện sơ bộ)
+// CHỨC NĂNG: Trang giỏ hàng & thanh toán
 // ============================================================
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addToCart, clearCart, consumeCartFocus, getCartItems, removeCartItem, updateCartItemQuantity } from '../utils/cartStorage'
 
 export default function CartPage() {
   const navigate = useNavigate()
-  
-  // Dữ liệu mẫu (mock data) cho giỏ hàng
-  const [cartItems] = useState([
-    {
-      id: 1,
-      title: 'Laptop Dell XPS 13 (Cũ)',
-      price: 15000000,
-      quantity: 1,
-      image_url: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=200&h=150&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Bàn phím cơ Keychron K2',
-      price: 1200000,
-      quantity: 1,
-      image_url: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=200&h=150&fit=crop'
-    }
-  ])
+  const [cartItems, setCartItems] = useState([])
 
   // Trạng thái lưu trữ danh sách ID các sản phẩm ĐƯỢC CHỌN (mặc định rỗng - không chọn gì)
   const [selectedItemIds, setSelectedItemIds] = useState([])
@@ -38,10 +22,22 @@ export default function CartPage() {
     note: ''
   })
 
+  useEffect(() => {
+    const nextCartItems = getCartItems()
+    setCartItems(nextCartItems)
+
+    const focusedItemId = consumeCartFocus()
+    if (focusedItemId && nextCartItems.some(item => item.id === focusedItemId)) {
+      setSelectedItemIds([focusedItemId])
+    }
+  }, [])
+
   // Chỉ tính tổng tiền cho những món được chọn
   const totalAmount = cartItems
     .filter(item => selectedItemIds.includes(item.id))
     .reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+  const selectedCount = selectedItemIds.length
 
   // Xử lý thay đổi input form
   const handleChange = (e) => {
@@ -56,6 +52,25 @@ export default function CartPage() {
         ? prev.filter(itemId => itemId !== id) // Đã có -> xoá đi (bỏ chọn)
         : [...prev, id] // Chưa có -> thêm vào (chọn)
     )
+  }
+
+  const syncCart = (nextItems) => {
+    setCartItems(nextItems)
+    setSelectedItemIds(prev => prev.filter(itemId => nextItems.some(item => item.id === itemId)))
+  }
+
+  const handleQuantityChange = (id, delta) => {
+    const item = cartItems.find(cartItem => cartItem.id === id)
+    if (!item) return
+
+    const nextQuantity = item.quantity + delta
+    const nextItems = updateCartItemQuantity(id, nextQuantity)
+    syncCart(nextItems)
+  }
+
+  const handleRemoveItem = (id) => {
+    const nextItems = removeCartItem(id)
+    syncCart(nextItems)
   }
 
   // Chọn/Bỏ chọn tất cả
@@ -84,6 +99,14 @@ export default function CartPage() {
     }
 
     alert(`Successfully checked out ${selectedItemIds.length} orders!\nThank you ${form.fullName}.\nWe will deliver to: ${form.address}`)
+    const remainingItems = cartItems.filter(item => !selectedItemIds.includes(item.id))
+    clearCart()
+    remainingItems.forEach(item => {
+      addToCart(item, item.quantity)
+    })
+    setCartItems(remainingItems)
+    setSelectedItemIds([])
+    setForm({ fullName: '', phone: '', address: '', note: '' })
     navigate('/') // Chuyển về trang chủ sau khi thanh toán xong
   }
 
@@ -128,9 +151,17 @@ export default function CartPage() {
                   <div style={styles.itemInfo}>
                     <h3 style={styles.itemTitle}>{item.title}</h3>
                     <p style={styles.itemPrice}>{item.price.toLocaleString('en-US')} VND</p>
+                    <p style={styles.itemMeta}>{item.type === 'rent' ? 'Rental item' : 'Marketplace item'}</p>
                   </div>
-                  <div style={styles.itemQuantity}>
-                    Quantity: {item.quantity}
+                  <div style={styles.itemActions}>
+                    <div style={styles.quantityStepper}>
+                      <button type="button" style={styles.qtyButton} onClick={() => handleQuantityChange(item.id, -1)}>-</button>
+                      <span style={styles.itemQuantity}>Qty {item.quantity}</span>
+                      <button type="button" style={styles.qtyButton} onClick={() => handleQuantityChange(item.id, 1)}>+</button>
+                    </div>
+                    <button type="button" style={styles.removeButton} onClick={() => handleRemoveItem(item.id)}>
+                      Remove
+                    </button>
                   </div>
                 </label>
               ))}
@@ -139,7 +170,7 @@ export default function CartPage() {
 
           <div style={styles.totalBox}>
             <span style={styles.totalLabel}>
-              Total ({selectedItemIds.length} items):
+              Total ({selectedCount} items):
             </span>
             <span style={styles.totalValue}>{totalAmount.toLocaleString('en-US')} VND</span>
           </div>
@@ -236,7 +267,12 @@ const styles = {
   itemInfo: { flex: 1 },
   itemTitle: { fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0' },
   itemPrice: { fontSize: '15px', color: '#dc2626', fontWeight: '600', margin: 0 },
-  itemQuantity: { fontSize: '14px', color: '#6b7280' },
+  itemMeta: { fontSize: '13px', color: '#6b7280', marginTop: '4px' },
+  itemActions: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' },
+  quantityStepper: { display: 'flex', alignItems: 'center', gap: '8px' },
+  qtyButton: { width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontWeight: '700' },
+  itemQuantity: { fontSize: '14px', color: '#6b7280', minWidth: '56px', textAlign: 'center' },
+  removeButton: { background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '13px', fontWeight: '600' },
   totalBox: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #e5e7eb' },
   totalLabel: { fontSize: '16px', fontWeight: '600', color: '#374151' },
   totalValue: { fontSize: '22px', fontWeight: '700', color: '#dc2626' },

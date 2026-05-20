@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { getProductByIdAPI } from '../api/products'
 import { getReviewsBySellerAPI } from '../api/reviews'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { addDays, addMonths } from 'date-fns'
 import { createRentalAPI, getProductRentalsAPI } from '../api/rentals'
+import { addToCart } from '../utils/cartStorage'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [product, setProduct] = useState(null)
   const [sellerStats, setSellerStats] = useState({ averageRating: 0, totalReviews: 0 })
   const [loading, setLoading] = useState(true)
@@ -86,6 +88,10 @@ export default function ProductDetailPage() {
     } else {
       alert(`Processing buy request...`)
     }
+  }
+
+  const handleAddToCart = () => {
+    addToCart(product)
   }
 
   return (
@@ -171,15 +177,25 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <button 
-                style={{
-                  ...styles.btnBuy, 
-                  backgroundColor: product.type === 'rent' ? '#8b0000' : '#16a34a'
-                }} 
-                onClick={handleAction}
-              >
-                {product.type === 'rent' ? 'Rent Now' : 'Buy Now'}
-              </button>
+              <div style={styles.buttonRow}>
+                <button
+                  type="button"
+                  style={styles.btnAddToCart}
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </button>
+                <button 
+                  type="button"
+                  style={{
+                    ...styles.btnBuy, 
+                    backgroundColor: product.type === 'rent' ? '#8b0000' : '#16a34a'
+                  }} 
+                  onClick={handleAction}
+                >
+                  {product.type === 'rent' ? 'Rent Now' : 'Buy Now'}
+                </button>
+              </div>
               <button style={styles.btnChat} onClick={() => alert('Starting chat with seller...')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 Chat with Seller
@@ -237,8 +253,10 @@ const styles = {
   descriptionText: { fontSize: '15px', color: '#4b5563', lineHeight: '1.6' },
 
   actionButtons: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  buttonRow: { display: 'flex', gap: '12px', width: '100%', flexWrap: 'wrap' },
+  btnAddToCart: { flex: '1 1 180px', padding: '16px', borderRadius: '12px', border: '2px solid #16a34a', backgroundColor: '#fff', color: '#16a34a', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
   dateInput: { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '15px' },
-  btnBuy: { width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#16a34a', color: '#fff', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
+  btnBuy: { flex: '1 1 180px', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#16a34a', color: '#fff', fontSize: '16px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
   btnChat: { width: '100%', padding: '16px', borderRadius: '12px', border: '2px solid #16a34a', backgroundColor: '#fff', color: '#16a34a', fontSize: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   sellerCard: { backgroundColor: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },

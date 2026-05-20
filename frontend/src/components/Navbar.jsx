@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getCartItemCount } from '../utils/cartStorage'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -9,6 +10,7 @@ export default function Navbar() {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
 
   // Load theme from localStorage
   useEffect(() => {
@@ -16,6 +18,16 @@ export default function Navbar() {
     if (savedTheme === 'dark') {
       document.body.classList.add('dark-mode')
       setIsDarkMode(true)
+    }
+    setCartCount(getCartItemCount())
+
+    const handleCartChange = () => setCartCount(getCartItemCount())
+    window.addEventListener('secondnest-cart-changed', handleCartChange)
+    window.addEventListener('storage', handleCartChange)
+
+    return () => {
+      window.removeEventListener('secondnest-cart-changed', handleCartChange)
+      window.removeEventListener('storage', handleCartChange)
     }
   }, [])
 
@@ -78,8 +90,13 @@ export default function Navbar() {
         </form>
 
         {/* Cart Button */}
-        <Link to="/cart" className="nav-icon" title="Cart">
+        <Link to="/cart" className="nav-icon" title="Cart" style={{ position: 'relative' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          {cartCount > 0 && (
+            <span style={{ position: 'absolute', top: '-6px', right: '-8px', minWidth: '18px', height: '18px', padding: '0 5px', borderRadius: '999px', background: '#16a34a', color: '#fff', fontSize: '11px', fontWeight: '700', lineHeight: '18px', textAlign: 'center', boxShadow: '0 2px 6px rgba(22,163,74,0.35)' }}>
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          )}
         </Link>
 
         {/* Theme Toggle Button */}
