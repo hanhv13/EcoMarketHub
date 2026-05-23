@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axiosInstance'
 
 // Props nhận vào:
 //   onSearch: hàm callback khi user bấm tìm kiếm
@@ -22,9 +22,9 @@ function SearchBar({ onSearch, initialValues = {} }) {
   // useEffect: chạy 1 lần khi component được mount (hiển thị lần đầu)
   useEffect(() => {
     // Gọi API lấy danh mục
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories`)
+    api.get('/api/categories')
       .then(res => setCategories(res.data))
-      .catch(err => console.error('Không lấy được categories:', err))
+      .catch(err => console.error('Failed to get categories:', err))
   }, []) // [] = chỉ chạy 1 lần
 
   // Xử lý khi user bấm nút Tìm kiếm
@@ -47,14 +47,14 @@ function SearchBar({ onSearch, initialValues = {} }) {
       {/* Ô tìm kiếm từ khoá */}
       <input
         type="text"
-        placeholder="🔍 Tìm kiếm sản phẩm..."
+        placeholder="🔍 Search products..."
         value={search}
         onChange={(e) => setSearch(e.target.value)} // Cập nhật state mỗi lần gõ
       />
 
       {/* Dropdown lọc danh mục */}
       <select value={category} onChange={(e) => setCategory(e.target.value)}>
-        <option value="">Tất cả danh mục</option>
+        <option value="">All Categories</option>
         {/* Render danh mục từ API */}
         {categories.map(cat => (
           <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -63,18 +63,18 @@ function SearchBar({ onSearch, initialValues = {} }) {
 
       {/* Dropdown lọc loại bán/thuê */}
       <select value={type} onChange={(e) => setType(e.target.value)}>
-        <option value="">Bán & Cho thuê</option>
-        <option value="sell">Chỉ bán</option>
-        <option value="rent">Chỉ cho thuê</option>
+        <option value="">Buy & Rent</option>
+        <option value="sell">Buy Only</option>
+        <option value="rent">Rent Only</option>
       </select>
 
       {/* Nút tìm kiếm */}
-      <button type="submit" className="btn btn-primary">Tìm kiếm</button>
+      <button type="submit" className="btn btn-primary">Search</button>
 
       {/* Nút xoá filter (chỉ hiện khi có filter) */}
       {(search || category || type) && (
         <button type="button" className="btn btn-secondary" onClick={handleReset}>
-          ✕ Xoá lọc
+          ✕ Clear Filter
         </button>
       )}
     </form>

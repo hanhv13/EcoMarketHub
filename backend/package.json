@@ -1,7 +1,7 @@
 {
-  "name": "secondnest-backend",
+  "name": "ecomarkethub-backend",
   "version": "1.0.0",
-  "description": "Backend API cho SecondNest - web mua bán đồ 2nd hand",
+  "description": "Backend API cho EcoMarketHub",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -14,7 +14,9 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.6.0"
+    "mysql2": "^3.6.0",
+    "nodemailer": "^8.0.7",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

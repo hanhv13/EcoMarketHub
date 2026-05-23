@@ -38,6 +38,7 @@ const uploadRoutes   = require('./routes/uploadRoutes');
 const eventRoutes    = require('./routes/eventRoutes');
 const reviewRoutes   = require('./routes/reviewRoutes');
 const rentalRoutes   = require('./routes/rentalRoutes');
+const adminRoutes    = require('./routes/adminRoutes');
 
 
 // Gắn routes vào app với prefix URL tương ứng
@@ -49,11 +50,12 @@ app.use('/api/upload',     uploadRoutes);    // /api/upload
 app.use('/api/events',     eventRoutes);     // /api/events
 app.use('/api/reviews',    reviewRoutes);    // /api/reviews
 app.use('/api/rentals',    rentalRoutes);    // /api/rentals
+app.use('/api/admin',      adminRoutes);     // /api/admin
 
 // Bước 5: Route kiểm tra server có chạy không
 app.get('/', (req, res) => {
     res.json({
-        message: '🚀 SecondNest API đang chạy!',
+        message: '🚀 EcoMarketHub API đang chạy!',
         version: '1.0.0',
         endpoints: ['/api/auth', '/api/products', '/api/categories', '/api/favorites', '/api/upload']
     });

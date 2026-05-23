@@ -1,14 +1,23 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 
 export default function ProductCard({ product }) {
+  const { addToCart } = useCart()
+  const navigate = useNavigate()
+
   // Format price
   const displayPrice = Number(product.price).toLocaleString('en-US') + ' VND'
 
-  // Handle buy/rent click (immediate action as requested)
-  const handleAction = (e) => {
-    e.preventDefault() // Stop navigation to detail page
-    const action = product.type === 'rent' ? 'Rent' : 'Buy'
-    alert(`Processing ${action} request for: ${product.title}`)
+  const handleAddToCart = (e) => {
+    e.preventDefault()
+    addToCart(product)
+    alert(`Added ${product.title} to cart!`)
+  }
+
+  const handleBuyNow = (e) => {
+    e.preventDefault()
+    addToCart(product)
+    navigate('/cart')
   }
 
   return (
@@ -29,26 +38,50 @@ export default function ProductCard({ product }) {
 
       <div className="product-card-body">
         <h3 className="product-card-title">{product.title}</h3>
-        <p className="product-card-price">{displayPrice}</p>
         
-        <div className="product-card-meta">
-          <span>📍 {product.location || 'Vietnam'}</span>
-          <span>{product.seller_name}</span>
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto' }}>
+          <p className="product-card-price">{displayPrice}</p>
+          
+          <div className="product-card-meta" style={{ marginBottom: '8px' }}>
+            <span>📍 {product.location || 'Vietnam'}</span>
+            <span>{product.seller_name}</span>
+          </div>
 
-        <button 
-          className="btn" 
-          style={{ 
-            width: '100%', 
-            marginTop: '12px', 
-            fontSize: '13px',
-            backgroundColor: product.type === 'rent' ? '#8b0000' : '#16a34a',
-            color: '#fff'
-          }}
-          onClick={handleAction}
-        >
-          {product.type === 'rent' ? 'Rent Now' : 'Buy Now'}
-        </button>
+          <div style={{ fontSize: '12px', color: product.stock_quantity > 0 ? '#16a34a' : '#dc2626', marginBottom: '12px', fontWeight: 'bold' }}>
+            {product.stock_quantity > 0 ? `In Stock: ${product.stock_quantity}` : 'Out of Stock'}
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {product.type === 'rent' ? (
+              <button 
+                className="btn" 
+                style={{ width: '100%', fontSize: '13px', backgroundColor: '#8b0000', color: '#fff' }}
+                onClick={(e) => { e.preventDefault(); navigate(`/products/${product.id}`) }}
+              >
+                Rent Now
+              </button>
+            ) : (
+              <>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, fontSize: '13px', padding: '8px 4px' }}
+                  onClick={handleAddToCart}
+                  disabled={product.stock_quantity === 0}
+                >
+                  Add to Cart
+                </button>
+                <button 
+                  className="btn" 
+                  style={{ flex: 1, fontSize: '13px', padding: '8px 4px', backgroundColor: '#16a34a', color: '#fff' }}
+                  onClick={handleBuyNow}
+                  disabled={product.stock_quantity === 0}
+                >
+                  Buy Now
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </Link>
   )

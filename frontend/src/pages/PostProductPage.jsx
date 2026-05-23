@@ -25,6 +25,8 @@ export default function PostProductPage() {
     price:       '',
     category_id: '',
     type:        'sell',
+    is_upcycled: false,
+    stock_quantity: 1
   })
 
   // Lấy danh mục khi component mount
@@ -33,8 +35,17 @@ export default function PostProductPage() {
   }, [])
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = e.target
+    setForm(prev => {
+      const newForm = { 
+        ...prev, 
+        [name]: type === 'checkbox' ? checked : value 
+      }
+      if (name === 'is_upcycled' && !checked) {
+        newForm.stock_quantity = 1
+      }
+      return newForm
+    })
   }
 
   // Xử lý khi user chọn ảnh
@@ -148,6 +159,34 @@ export default function PostProductPage() {
             <input className="form-control" type="number" name="price"
               value={form.price} onChange={handleChange}
               placeholder="Ex: 5000000" min="0" required />
+          </div>
+
+          {/* ---- Is Upcycled & Stock Quantity ---- */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                name="is_upcycled" 
+                checked={form.is_upcycled} 
+                onChange={handleChange} 
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span>This is an Upcycled/Recycled product</span>
+            </label>
+            
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Stock Quantity * { !form.is_upcycled && <span style={{fontSize: '12px', color: '#dc2626'}}>(Used items are unique - max 1)</span> }</label>
+              <input 
+                className="form-control" 
+                type="number" 
+                name="stock_quantity"
+                value={form.stock_quantity} 
+                onChange={handleChange}
+                min="1" required 
+                disabled={!form.is_upcycled}
+                style={{ backgroundColor: !form.is_upcycled ? '#f3f4f6' : '#fff' }}
+              />
+            </div>
           </div>
 
           {/* ---- Mô tả ---- */}

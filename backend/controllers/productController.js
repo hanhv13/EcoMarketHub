@@ -5,12 +5,12 @@ const db = require('../config/db');
 // ============================================================
 const getAllProducts = async (req, res) => {
     try {
-        const { search, category, type, location, page = 1, limit = 12 } = req.query;
+        const { search, category, type, location, excludeUserId, page = 1, limit = 12 } = req.query;
 
         let sql = `
             SELECT
                 p.id, p.title, p.description, p.price, p.image_url,
-                p.type, p.status, p.created_at, p.condition, p.location, p.is_premium, p.images,
+                p.type, p.status, p.created_at, p.condition, p.location, p.is_premium, p.is_upcycled, p.stock_quantity, p.images,
                 u.id AS seller_id, u.username AS seller_name, u.avatar_url AS seller_avatar,
                 c.id AS category_id, c.name AS category_name
             FROM products p
@@ -39,6 +39,11 @@ const getAllProducts = async (req, res) => {
         if (location) {
             sql += ' AND p.location = ?';
             params.push(location);
+        }
+
+        if (excludeUserId) {
+            sql += ' AND p.user_id != ?';
+            params.push(parseInt(excludeUserId));
         }
 
         if (req.query.sortPrice === 'asc') {
@@ -76,6 +81,11 @@ const getAllProducts = async (req, res) => {
         if (location) {
             countSql += ' AND p.location = ?';
             countParams.push(location);
+        }
+
+        if (excludeUserId) {
+            countSql += ' AND p.user_id != ?';
+            countParams.push(parseInt(excludeUserId));
         }
 
         const [countResult] = await db.query(countSql, countParams);
@@ -133,7 +143,7 @@ const getProductById = async (req, res) => {
 // ============================================================
 const createProduct = async (req, res) => {
     try {
-        const { title, description, price, category_id, type, image_url, condition, location, is_premium, images } = req.body;
+        const { title, description, price, category_id, type, image_url, condition, location, is_premium, is_upcycled, stock_quantity, images } = req.body;
 
         if (!title || !price || !category_id) {
             return res.status(400).json({ message: 'Please enter title, price, and category.' });
@@ -144,13 +154,17 @@ const createProduct = async (req, res) => {
         }
 
         const userId = req.user.id;
+        
+        // Enforce: Used items (not upcycled) are unique, max stock 1.
+        const isUpcycledBool = is_upcycled === true || is_upcycled === 'true' || is_upcycled === 1;
+        const final_stock_quantity = !isUpcycledBool ? 1 : (stock_quantity || 1);
 
         const [result] = await db.query(
-            `INSERT INTO products (user_id, category_id, title, description, price, image_url, type, \`condition\`, location, is_premium, images)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO products (user_id, category_id, title, description, price, image_url, type, \`condition\`, location, is_premium, is_upcycled, stock_quantity, images)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 userId, category_id, title, description || '', price, image_url || null, type || 'sell',
-                condition || 'Used', location || 'Vietnam', is_premium || false, images ? JSON.stringify(images) : null
+                condition || 'Used', location || 'Vietnam', is_premium || false, isUpcycledBool, final_stock_quantity, images ? JSON.stringify(images) : null
             ]
         );
 
@@ -187,13 +201,16 @@ const updateProduct = async (req, res) => {
             return res.status(404).json({ message: 'Product not found or access denied.' });
         }
 
-        const { title, description, price, category_id, type, image_url, status, condition, location, is_premium, images } = req.body;
+        const { title, description, price, category_id, type, image_url, status, condition, location, is_premium, is_upcycled, stock_quantity, images } = req.body;
+
+        const isUpcycledBool = is_upcycled !== undefined ? (is_upcycled === true || is_upcycled === 'true' || is_upcycled === 1) : products[0].is_upcycled;
+        const final_stock_quantity = !isUpcycledBool ? 1 : (stock_quantity !== undefined ? stock_quantity : products[0].stock_quantity);
 
         await db.query(
             `UPDATE products
              SET title = ?, description = ?, price = ?, category_id = ?,
                  type = ?, image_url = ?, status = ?, \`condition\` = ?,
-                 location = ?, is_premium = ?, images = ?
+                 location = ?, is_premium = ?, is_upcycled = ?, stock_quantity = ?, images = ?
              WHERE id = ? AND user_id = ?`,
             [
                 title       || products[0].title,
@@ -206,6 +223,8 @@ const updateProduct = async (req, res) => {
                 condition   || products[0].condition,
                 location    || products[0].location,
                 is_premium  !== undefined ? is_premium : products[0].is_premium,
+                isUpcycledBool, 
+                final_stock_quantity,
                 images      ? JSON.stringify(images) : products[0].images,
                 id, userId
             ]
@@ -295,6 +314,75 @@ const getCategoriesWithCount = async (req, res) => {
     }
 };
 
+// ============================================================
+// CHECKOUT PRODUCTS
+// Receives an array of items [{ id, quantity }]
+// Checks stock, deducts stock, sets to 'sold' if 0, adds points.
+// ============================================================
+const checkoutProducts = async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const { items } = req.body; // array of { id, quantity }
+        if (!items || items.length === 0) {
+            await connection.rollback();
+            return res.status(400).json({ message: 'Cart is empty.' });
+        }
+
+        let totalUpcycledPoints = 0;
+
+        for (const item of items) {
+            const [rows] = await connection.query(
+                'SELECT id, title, price, stock_quantity, is_upcycled FROM products WHERE id = ? FOR UPDATE',
+                [item.id]
+            );
+
+            if (rows.length === 0) {
+                await connection.rollback();
+                return res.status(404).json({ message: `Product ID ${item.id} not found.` });
+            }
+
+            const product = rows[0];
+            if (product.stock_quantity < item.quantity) {
+                await connection.rollback();
+                return res.status(400).json({ message: `Insufficient stock for product: ${product.title}. Only ${product.stock_quantity} left.` });
+            }
+
+            const newStock = product.stock_quantity - item.quantity;
+            let statusQuery = newStock === 0 ? ", status = 'sold'" : "";
+
+            await connection.query(
+                `UPDATE products SET stock_quantity = ? ${statusQuery} WHERE id = ?`,
+                [newStock, item.id]
+            );
+
+            const isUpcycledBool = product.is_upcycled === true || product.is_upcycled === 'true' || product.is_upcycled === 1;
+            if (isUpcycledBool) {
+                const pointsEarned = Math.floor((parseFloat(product.price) * item.quantity) * 0.05);
+                totalUpcycledPoints += pointsEarned;
+            }
+        }
+
+        if (totalUpcycledPoints > 0) {
+            await connection.query(
+                'UPDATE users SET green_points = green_points + ? WHERE id = ?',
+                [totalUpcycledPoints, req.user.id]
+            );
+        }
+
+        await connection.commit();
+        res.json({ message: 'Checkout successful!', earnedPoints: totalUpcycledPoints });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('checkoutProducts error:', error);
+        res.status(500).json({ message: 'Server error during checkout.' });
+    } finally {
+        connection.release();
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
@@ -302,5 +390,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getProductsByUser,
-    getCategoriesWithCount
+    getCategoriesWithCount,
+    checkoutProducts
 };

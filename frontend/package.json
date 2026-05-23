@@ -1,7 +1,8 @@
 {
-  "name": "secondnest-frontend",
-  "version": "1.0.0",
-  "description": "Frontend React cho SecondNest",
+  "name": "ecomarkethub-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Frontend React cho EcoMarketHub",
   "type": "module",
   "scripts": {
     "dev": "vite",

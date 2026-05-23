@@ -13,7 +13,7 @@ const api = axios.create({
 // Giống như nhân viên bảo vệ kiểm tra thẻ trước khi vào cửa
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('secondnest_token')
+    const token = localStorage.getItem('ecomarkethub_token')
     if (token) {
       // Gắn token vào header Authorization
       config.headers['Authorization'] = `Bearer ${token}`
@@ -30,8 +30,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token hết hạn → xoá và chuyển về trang login
-      localStorage.removeItem('secondnest_token')
-      localStorage.removeItem('secondnest_user')
+      localStorage.removeItem('ecomarkethub_token')
+      localStorage.removeItem('ecomarkethub_user')
       window.location.href = '/login'
     }
     return Promise.reject(error)

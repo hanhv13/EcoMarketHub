@@ -1,29 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-body: #fdfcf0;      /* Creamy light background */
-  --bg-header: #fdfcf0;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-  --brand-green: #16a34a;
-  --brand-green-hover: #15803d;
+  --bg-body: #f4f6f0;      /* Slightly deeper cream/green background */
+  --bg-header: #ffffff;
+  --text-main: #1c261e;    /* Dark forest green text instead of gray */
+  --text-muted: #5e6b63;
+  --brand-green: #15803d;  /* Richer green */
+  --brand-green-hover: #166534;
+  --price-color: #16a34a;   /* Bright green */
+  --btn-buy-bg: #15803d;    /* Standard green */
   --card-bg: #ffffff;
-  --border-color: #e5e7eb;
-  --cat-bg: #f8f7eb;
-  --cat-border: #edebe1;
-  --cat-icon-bg: #e0ebd9;
+  --border-color: #e1e8e3;
+  --cat-bg: #fdfbf7;
+  --cat-border: #d1d5db;
+  --cat-icon-bg: #dcfce7;
+  --fav-bg: rgba(255, 255, 255, 0.9);
+  --fav-bg-hover: #ffffff;
 }
 
 body.dark-mode {
-  --bg-body: #111827;
-  --bg-header: #1f2937;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --card-bg: #1f2937;
-  --border-color: #374151;
-  --cat-bg: #374151;
-  --cat-border: #4b5563;
-  --cat-icon-bg: #4b5563;
+  --bg-body: linear-gradient(145deg, #1f2122 0%, #141515 100%); /* Subtle dark gray gradient */
+  --bg-header: #1a1c1d;    /* Slightly lighter than body end */
+  --text-main: #f3f4f6;    /* Off-white */
+  --text-muted: #9ca3af;   /* Neutral gray */
+  --brand-green: #059669;  /* Emerald-600: Calmer, deeper premium green */
+  --brand-green-hover: #047857; /* Emerald-700 */
+  --price-color: #34d399;  /* Emerald-400: Brighter, popping green for price */
+  --btn-buy-bg: #064e3b;   /* Emerald-900: Darker, grounded green for button */
+  --card-bg: #26292b;      /* Softer dark card background */
+  --border-color: #373b3e; /* Soft dark border */
+  --cat-bg: #2a2d2f;       
+  --cat-border: #373b3e;
+  --cat-icon-bg: #1b2e26;  /* Very dark green tint for icon backgrounds */
+  --fav-bg: rgba(0, 0, 0, 0.4);
+  --fav-bg-hover: rgba(0, 0, 0, 0.8);
 }
 
 body {
@@ -141,8 +151,8 @@ body {
   margin-bottom: 40px;
 }
 .cat-card {
-  background: #fdfbf7; /* Màu kem sáng để nổi lên trên nền kem đậm */
-  border: 1px solid #d1d5db; /* Viền mỏng và rõ hơn */
+  background: var(--cat-bg);
+  border: 1px solid var(--cat-border);
   border-radius: 20px;
   padding: 24px;
   text-align: left;
@@ -166,12 +176,13 @@ body {
   background: var(--card-bg); border-radius: 12px; overflow: hidden;
   border: 1px solid var(--border-color);
   transition: transform .2s, box-shadow .2s;
-  cursor: pointer; text-decoration: none; color: inherit; display: block;
+  cursor: pointer; text-decoration: none; color: inherit; 
+  display: flex; flex-direction: column;
 }
 .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,.12); }
-.product-card-img { width: 100%; height: 180px; object-fit: cover; background: #e9ecef; position: relative; }
+.product-card-img { width: 100%; height: 180px; object-fit: cover; background: var(--border-color); position: relative; }
 .product-card-img img { width: 100%; height: 100%; object-fit: cover; }
-.product-card-body { padding: 14px; }
+.product-card-body { padding: 14px; display: flex; flex-direction: column; flex-grow: 1; }
 .product-card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-main); }
 .product-card-price { font-size: 18px; font-weight: 700; color: var(--brand-green); margin-bottom: 6px; }
 .product-card-meta { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
@@ -179,12 +190,12 @@ body {
 
 .btn-fav-card {
   position: absolute; top: 8px; right: 8px; z-index: 10;
-  background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%;
+  background: var(--fav-bg); border: none; border-radius: 50%;
   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   transition: transform 0.2s, background 0.2s;
 }
-.btn-fav-card:hover { transform: scale(1.1); background: white; color: red; }
+.btn-fav-card:hover { transform: scale(1.1); background: var(--fav-bg-hover); color: red; }
 
 /* === FORMS & OTHERS === */
 .form-group { margin-bottom: 18px; }
@@ -214,3 +225,88 @@ body {
 .listings-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
 .listings-table th { background: var(--bg-header); color: var(--text-main); padding: 12px 16px; text-align: left; font-size: 14px; }
 .listings-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); }
+
+/* === BRAND MARQUEE SLIDER === */
+.brand-slider-container {
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.brand-slider-container::before,
+.brand-slider-container::after {
+  content: "";
+  height: 100%;
+  position: absolute;
+  width: 150px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.brand-slider-container::before {
+  left: 0;
+  top: 0;
+  background: linear-gradient(to right, var(--bg-body) 0%, transparent 100%);
+}
+
+.brand-slider-container::after {
+  right: 0;
+  top: 0;
+  background: linear-gradient(to left, var(--bg-body) 0%, transparent 100%);
+}
+
+.brand-slider-track {
+  display: flex;
+  width: calc(250px * 8);
+  animation: scrollMarquee 25s linear infinite;
+}
+
+.brand-slider-track:hover {
+  animation-play-state: paused;
+}
+
+.brand-logo-item {
+  width: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  filter: grayscale(100%) opacity(35%);
+  transition: filter 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.brand-logo-item:hover {
+  filter: grayscale(0%) opacity(100%);
+  transform: scale(1.06);
+}
+
+.brand-icon {
+  color: var(--brand-green);
+  transition: transform 0.3s;
+}
+
+.brand-logo-item:hover .brand-icon {
+  transform: rotate(-10deg) scale(1.1);
+}
+
+.brand-logo-name {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+@keyframes scrollMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-250px * 4)); }
+}

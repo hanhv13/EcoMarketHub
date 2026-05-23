@@ -17,6 +17,15 @@ const createRental = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // Check if user is trying to rent their own product
+        const [products] = await db.query('SELECT user_id, price FROM products WHERE id = ?', [product_id]);
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'Product not found.' });
+        }
+        if (products[0].user_id === user_id) {
+            return res.status(400).json({ message: 'You cannot rent your own product.' });
+        }
+
         // Validation
         if (startDate < today) {
             return res.status(400).json({ message: 'Start date cannot be in the past.' });
@@ -53,7 +62,16 @@ const createRental = async (req, res) => {
             [product_id, user_id, start_date, end_date]
         );
 
-        res.status(201).json({ message: 'Rental booked successfully!', rentalId: result.insertId });
+        // Calculate and add points (10% of rental value)
+        const days = Math.max(1, Math.ceil(daysDiff));
+        const totalPrice = products[0].price * days;
+        const pointsEarned = Math.floor(totalPrice * 0.10);
+
+        if (pointsEarned > 0) {
+            await db.query('UPDATE users SET green_points = green_points + ? WHERE id = ?', [pointsEarned, user_id]);
+        }
+
+        res.status(201).json({ message: `Rental booked successfully! You earned ${pointsEarned} Green Points.`, rentalId: result.insertId });
     } catch (error) {
         console.error('createRental error:', error);
         res.status(500).json({ message: 'Server error while booking rental.' });

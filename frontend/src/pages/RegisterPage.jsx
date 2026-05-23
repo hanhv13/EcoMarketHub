@@ -54,7 +54,7 @@ export default function RegisterPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>♻️ Sign Up for SecondNest</h1>
+        <h1 style={styles.title}>♻️ Sign Up for EcoMarketHub</h1>
 
         {error   && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}

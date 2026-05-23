@@ -1,11 +1,12 @@
-// FILE: backend/routes/productRoutes.js
 const express = require('express');
 const router  = express.Router();
 const {
     getAllProducts, getProductById, createProduct,
-    updateProduct, deleteProduct, getProductsByUser, getCategoriesWithCount
+    updateProduct, deleteProduct, getProductsByUser, getCategoriesWithCount, checkoutProducts
 } = require('../controllers/productController');
 const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/checkout', authMiddleware, checkoutProducts);
 
 router.route('/')
     .get(getAllProducts)                 // GET /api/products

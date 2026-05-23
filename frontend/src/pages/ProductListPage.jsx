@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { getProductsAPI, getCategoriesWithCountAPI } from '../api/products'
 import ProductCard from '../components/ProductCard'
 
@@ -57,6 +58,7 @@ function getCategoryIcon(name) {
 }
 
 export default function ProductListPage() {
+  const { user } = useAuth()
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const searchQuery = searchParams.get('search') || ''
@@ -89,6 +91,7 @@ export default function ProductListPage() {
         search: searchQuery,
         page:  pagination.page,
         limit: 12,
+        excludeUserId: user?.id,
       })
       setProducts(res.data.products)
       setPagination(prev => ({ ...prev, ...res.data.pagination }))
@@ -107,14 +110,6 @@ export default function ProductListPage() {
   const clearFilters = () => {
     setFilters({ category: '', type: '', sortPrice: '', location: '' })
     setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const toggleSortPrice = () => {
-    setPagination(prev => ({ ...prev, page: 1 }))
-    setFilters(prev => ({
-      ...prev,
-      sortPrice: prev.sortPrice === 'asc' ? 'desc' : (prev.sortPrice === 'desc' ? '' : 'desc')
-    }))
   }
 
   return (
@@ -215,13 +210,31 @@ export default function ProductListPage() {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-          <button
-            onClick={toggleSortPrice}
-            className="btn btn-outline"
-            style={{ padding: '8px 16px', minWidth: '90px' }}
+          <select
+            style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)', color: 'var(--text-main)' }}
+            value={filters.type}
+            onChange={(e) => {
+              setPagination(prev => ({ ...prev, page: 1 }))
+              setFilters(prev => ({ ...prev, type: e.target.value }))
+            }}
           >
-            Price {filters.sortPrice === 'asc' ? '↑' : (filters.sortPrice === 'desc' ? '↓' : '')}
-          </button>
+            <option value="">All Types</option>
+            <option value="sell">Buy (For Sale)</option>
+            <option value="rent">Rent</option>
+          </select>
+
+          <select
+            style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)', color: 'var(--text-main)' }}
+            value={filters.sortPrice}
+            onChange={(e) => {
+              setPagination(prev => ({ ...prev, page: 1 }))
+              setFilters(prev => ({ ...prev, sortPrice: e.target.value }))
+            }}
+          >
+            <option value="">Sort by Price</option>
+            <option value="asc">Price: Low to High</option>
+            <option value="desc">Price: High to Low</option>
+          </select>
         </div>
       </div>
 

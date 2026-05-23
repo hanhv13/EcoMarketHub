@@ -53,21 +53,22 @@ export default function LoginPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>♻️ Login to SecondNest</h1>
+        <h1 style={styles.title}>♻️ Login to EcoMarketHub</h1>
 
         {/* Hiện thông báo lỗi nếu có */}
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>Email or Username</label>
             <input
               className="form-control"
-              type="email"
-              name="email"        // name phải khớp với key trong state form
+              type="text"
+              name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="email@example.com"
+              placeholder="Enter email or username"
+              autoComplete="off"
               required
             />
           </div>
@@ -81,8 +82,13 @@ export default function LoginPage() {
               value={form.password}
               onChange={handleChange}
               placeholder="Enter password"
+              autoComplete="new-password"
               required
             />
+          </div>
+
+          <div style={{ textAlign: 'right', marginBottom: '15px' }}>
+            <Link to="/forgot-password" style={styles.link}>Forgot Password?</Link>
           </div>
 
           <button

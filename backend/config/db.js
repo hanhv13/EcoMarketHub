@@ -13,7 +13,7 @@ const pool = mysql.createPool({
     host:     process.env.DB_HOST || 'localhost',  // Địa chỉ MySQL server
     user:     process.env.DB_USER || 'root',       // Tên đăng nhập MySQL
     password: process.env.DB_PASSWORD || '',       // Mật khẩu MySQL (lấy từ .env)
-    database: process.env.DB_NAME || 'secondnest', // Tên database
+    database: process.env.DB_NAME || 'ecomarkethub', // Tên database
     port:     process.env.DB_PORT || 3306,         // Cổng MySQL mặc định
     waitForConnections: true,   // Chờ nếu hết kết nối trong pool
     connectionLimit: 10,        // Tối đa 10 kết nối đồng thời

@@ -21,8 +21,8 @@ export function AuthProvider({ children }) {
   // useEffect chạy 1 lần khi app khởi động
   // Mục đích: nếu user đã đăng nhập trước đó, khôi phục lại trạng thái
   useEffect(() => {
-    const savedUser  = localStorage.getItem('secondnest_user')
-    const savedToken = localStorage.getItem('secondnest_token')
+    const savedUser  = localStorage.getItem('ecomarkethub_user')
+    const savedToken = localStorage.getItem('ecomarkethub_token')
 
     if (savedUser && savedToken) {
       // JSON.parse: chuyển chuỗi JSON thành object
@@ -35,19 +35,19 @@ export function AuthProvider({ children }) {
   const login = (userData, token) => {
     setUser(userData)
     // localStorage: lưu dữ liệu trong trình duyệt, tắt máy vẫn còn
-    localStorage.setItem('secondnest_user',  JSON.stringify(userData))
-    localStorage.setItem('secondnest_token', token)
+    localStorage.setItem('ecomarkethub_user',  JSON.stringify(userData))
+    localStorage.setItem('ecomarkethub_token', token)
   }
 
   // Hàm đăng xuất: xoá user và token
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('secondnest_user')
-    localStorage.removeItem('secondnest_token')
+    localStorage.removeItem('ecomarkethub_user')
+    localStorage.removeItem('ecomarkethub_token')
   }
 
   // Hàm lấy token để gắn vào Axios header
-  const getToken = () => localStorage.getItem('secondnest_token')
+  const getToken = () => localStorage.getItem('ecomarkethub_token')
 
   // Cung cấp các giá trị này cho toàn bộ app
   return (

@@ -51,10 +51,10 @@ Cách nhanh nhất để chạy toàn bộ dự án mà không cần cài đặt
 
 ### Bước 2: Khởi tạo Database
 1. Mở **MySQL Workbench** và kết nối vào MySQL Server local.
-2. Tạo schema mới bằng lệnh: `CREATE DATABASE secondnest;`
+2. Tạo schema mới bằng lệnh: `CREATE DATABASE ecomarkethub;`
 3. Mở và chạy file `database/schema.sql` (bấm nút ⚡ Execute) để tạo cấu trúc các bảng.
 4. Mở và chạy file `database/clean_database.sql` (bấm nút ⚡ Execute) để thêm dữ liệu mẫu.
-*(Kiểm tra cột bên trái, nếu thấy database `secondnest` có đủ các bảng là thành công)*
+*(Kiểm tra cột bên trái, nếu thấy database `ecomarkethub` có đủ các bảng là thành công)*
 
 ### Bước 3: Cài đặt Backend
 ```bash

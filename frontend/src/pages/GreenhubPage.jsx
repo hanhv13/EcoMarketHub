@@ -1,22 +1,13 @@
 import { useState, useEffect } from 'react'
-import { getEventsAPI, createEventAPI, deleteEventAPI } from '../api/events'
+import { getEventsAPI } from '../api/events'
 import { useAuth } from '../context/AuthContext'
+import axios from 'axios'
 
 export default function GreenhubPage() {
   const { user } = useAuth()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    location: '',
-    event_date: '',
-    image_url: ''
-  })
-
-  const isAdmin = user?.role === 'admin'
 
   useEffect(() => {
     fetchEvents()
@@ -34,27 +25,7 @@ export default function GreenhubPage() {
     }
   }
 
-  const handleCreateEvent = async (e) => {
-    e.preventDefault()
-    try {
-      await createEventAPI(formData)
-      setShowModal(false)
-      fetchEvents()
-      setFormData({ title: '', description: '', location: '', event_date: '', image_url: '' })
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error creating event')
-    }
-  }
 
-  const handleDeleteEvent = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return
-    try {
-      await deleteEventAPI(id)
-      fetchEvents()
-    } catch (err) {
-      alert('Error deleting event')
-    }
-  }
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>
 
@@ -65,11 +36,6 @@ export default function GreenhubPage() {
           <h1 style={styles.pageTitle}>🌿 GreenHub Events</h1>
           <p style={styles.pageSubtitle}>Join our community events for a greener future!</p>
         </div>
-        {isAdmin && (
-          <button style={styles.btnCreate} onClick={() => setShowModal(true)}>
-            + Create Event
-          </button>
-        )}
       </header>
 
       <div style={styles.eventGrid}>
@@ -91,14 +57,6 @@ export default function GreenhubPage() {
               <p style={styles.eventDesc}>{event.description}</p>
               <div style={styles.eventFooter}>
                 <span style={styles.creator}>By {event.creator_name}</span>
-                {isAdmin && (
-                  <button 
-                    style={styles.btnDelete} 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id); }}
-                  >
-                    Delete
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -111,45 +69,6 @@ export default function GreenhubPage() {
         </div>
       )}
 
-      {/* Modal for Creating Event */}
-      {showModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h2 style={{marginBottom: '20px'}}>Create New Event</h2>
-            <form onSubmit={handleCreateEvent} style={styles.form}>
-              <input 
-                type="text" placeholder="Event Title" required 
-                style={styles.input} value={formData.title} 
-                onChange={e => setFormData({...formData, title: e.target.value})}
-              />
-              <textarea 
-                placeholder="Description" style={styles.textarea} 
-                value={formData.description} 
-                onChange={e => setFormData({...formData, description: e.target.value})}
-              />
-              <input 
-                type="text" placeholder="Location" style={styles.input} 
-                value={formData.location} 
-                onChange={e => setFormData({...formData, location: e.target.value})}
-              />
-              <input 
-                type="datetime-local" required style={styles.input} 
-                value={formData.event_date} 
-                onChange={e => setFormData({...formData, event_date: e.target.value})}
-              />
-              <input 
-                type="text" placeholder="Image URL" style={styles.input} 
-                value={formData.image_url} 
-                onChange={e => setFormData({...formData, image_url: e.target.value})}
-              />
-              <div style={styles.modalActions}>
-                <button type="button" onClick={() => setShowModal(false)} style={styles.btnCancel}>Cancel</button>
-                <button type="submit" style={styles.btnSubmit}>Create</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal for Event Details */}
       {selectedEvent && (
@@ -179,12 +98,19 @@ export default function GreenhubPage() {
             
             <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#9ca3af' }}>Organized by {selectedEvent.creator_name}</span>
-              <button 
-                style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }} 
-                onClick={() => alert('Registering for event...')}
-              >
-                Register Now
-              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div 
+                  style={{ backgroundColor: '#2563eb', color: '#fff', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', opacity: 0.8 }} 
+                >
+                  📸 Scan QR at Event Location
+                </div>
+                <button 
+                  style={{ backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }} 
+                  onClick={() => alert('Registering for event...')}
+                >
+                  Register Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -198,7 +124,7 @@ const styles = {
   pageTitle: { fontSize: '32px', color: '#16a34a', margin: 0 },
   pageSubtitle: { color: '#6b7280', marginTop: '4px' },
   btnCreate: { backgroundColor: '#16a34a', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' },
-  eventGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' },
+  eventGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' },
   eventCard: { backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' },
   imageWrapper: { position: 'relative', height: '200px' },
   eventImage: { width: '100%', height: '100%', objectFit: 'cover' },

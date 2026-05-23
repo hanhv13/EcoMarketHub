@@ -5,27 +5,14 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
+import api from '../api/axiosInstance'
 
 export default function CartPage() {
   const navigate = useNavigate()
-  
-  // Dữ liệu mẫu (mock data) cho giỏ hàng
-  const [cartItems] = useState([
-    {
-      id: 1,
-      title: 'Laptop Dell XPS 13 (Cũ)',
-      price: 15000000,
-      quantity: 1,
-      image_url: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=200&h=150&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Bàn phím cơ Keychron K2',
-      price: 1200000,
-      quantity: 1,
-      image_url: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=200&h=150&fit=crop'
-    }
-  ])
+  const { cartItems, updateQuantity, removeFromCart, checkoutItems } = useCart()
+  const { user } = useAuth()
 
   // Trạng thái lưu trữ danh sách ID các sản phẩm ĐƯỢC CHỌN (mặc định rỗng - không chọn gì)
   const [selectedItemIds, setSelectedItemIds] = useState([])
@@ -68,23 +55,41 @@ export default function CartPage() {
   }
 
   // Xử lý khi nhấn thanh toán
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Kiểm tra xem đã chọn sản phẩm nào chưa
     if (selectedItemIds.length === 0) {
       alert('Please select at least 1 product to checkout.')
       return
     }
 
-    // Validate form cơ bản
     if (!form.fullName || !form.phone || !form.address) {
       alert('Please fill in all required shipping information.')
       return
     }
 
-    alert(`Successfully checked out ${selectedItemIds.length} orders!\nThank you ${form.fullName}.\nWe will deliver to: ${form.address}`)
-    navigate('/') // Chuyển về trang chủ sau khi thanh toán xong
+    const selectedItems = cartItems.filter(item => selectedItemIds.includes(item.id))
+    const checkoutPayload = {
+      items: selectedItems.map(item => ({ id: item.id, quantity: item.quantity }))
+    }
+
+    try {
+      const res = await api.post('/api/products/checkout', checkoutPayload)
+
+      const earnedPoints = res.data.earnedPoints || 0
+      if (earnedPoints > 0) {
+        alert(`Successfully checked out ${selectedItemIds.length} orders!\nThank you ${form.fullName}.\nYou earned ${earnedPoints} Green Points for buying upcycled products!`)
+      } else {
+        alert(`Successfully checked out ${selectedItemIds.length} orders!\nThank you ${form.fullName}.\nWe will deliver to: ${form.address}`)
+      }
+
+      checkoutItems(selectedItemIds)
+      setSelectedItemIds([])
+      navigate('/') 
+    } catch (err) {
+      console.error(err)
+      alert(err.response?.data?.message || 'Checkout failed. Please try again.')
+    }
   }
 
   // Responsive đơn giản
@@ -124,13 +129,18 @@ export default function CartPage() {
                     onChange={() => toggleSelectItem(item.id)}
                     style={styles.itemCheckbox}
                   />
-                  <img src={item.image_url} alt={item.title} style={styles.itemImage} />
+                  <img src={item.image_url || (item.images && item.images.length > 0 ? (typeof item.images === 'string' ? JSON.parse(item.images)[0] : item.images[0]) : 'https://placehold.co/80x80?text=No+Image')} alt={item.title} style={styles.itemImage} />
                   <div style={styles.itemInfo}>
-                    <h3 style={styles.itemTitle}>{item.title}</h3>
-                    <p style={styles.itemPrice}>{item.price.toLocaleString('en-US')} VND</p>
+                    <h3 style={styles.itemTitle}>
+                      {item.title} {item.is_upcycled ? '♻️' : ''}
+                    </h3>
+                    <p style={styles.itemPrice}>{Number(item.price).toLocaleString('en-US')} VND</p>
                   </div>
-                  <div style={styles.itemQuantity}>
-                    Quantity: {item.quantity}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button onClick={(e) => { e.preventDefault(); updateQuantity(item.id, item.quantity - 1) }} style={styles.qtyBtn}>-</button>
+                    <span style={styles.itemQuantity}>{item.quantity}</span>
+                    <button onClick={(e) => { e.preventDefault(); updateQuantity(item.id, item.quantity + 1) }} style={styles.qtyBtn}>+</button>
+                    <button onClick={(e) => { e.preventDefault(); removeFromCart(item.id) }} style={styles.removeBtn}>🗑️</button>
                   </div>
                 </label>
               ))}
@@ -240,5 +250,7 @@ const styles = {
   totalBox: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #e5e7eb' },
   totalLabel: { fontSize: '16px', fontWeight: '600', color: '#374151' },
   totalValue: { fontSize: '22px', fontWeight: '700', color: '#dc2626' },
-  form: { display: 'flex', flexDirection: 'column', gap: '16px' }
+  form: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  qtyBtn: { width: '28px', height: '28px', borderRadius: '4px', border: '1px solid #d1d5db', background: '#f3f4f6', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: '#374151' },
+  removeBtn: { marginLeft: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ef4444' }
 }
