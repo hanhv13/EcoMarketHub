@@ -2,11 +2,13 @@ const express = require('express');
 const router  = express.Router();
 const {
     getAllProducts, getProductById, createProduct,
-    updateProduct, deleteProduct, getProductsByUser, getCategoriesWithCount, checkoutProducts
+    updateProduct, deleteProduct, getProductsByUser, getCategoriesWithCount, checkoutProducts, getPurchasedItems
 } = require('../controllers/productController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/checkout', authMiddleware, checkoutProducts);
+
+router.get('/purchases', authMiddleware, getPurchasedItems);
 
 router.route('/')
     .get(getAllProducts)                 // GET /api/products

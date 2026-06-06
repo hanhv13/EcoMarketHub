@@ -14,6 +14,7 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import LoginPage        from './pages/LoginPage'
 import RegisterPage     from './pages/RegisterPage'
 import PostProductPage  from './pages/PostProductPage'
+import EditProductPage  from './pages/EditProductPage'
 import MyListingsPage   from './pages/MyListingsPage'
 import FavoritesPage    from './pages/FavoritesPage'
 import CartPage         from './pages/CartPage'
@@ -75,6 +76,7 @@ function AppContent() {
             <Route path="/"          element={<PrivateRoute><ProductListPage /></PrivateRoute>} />
             <Route path="/products/:id" element={<PrivateRoute><ProductDetailPage /></PrivateRoute>} />
             <Route path="/post"      element={<PrivateRoute><PostProductPage /></PrivateRoute>} />
+            <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
             <Route path="/my-listings" element={<PrivateRoute><MyListingsPage /></PrivateRoute>} />
             <Route path="/favorites" element={<PrivateRoute><FavoritesPage /></PrivateRoute>} />
             <Route path="/greenhub"  element={<PrivateRoute><GreenhubPage /></PrivateRoute>} />

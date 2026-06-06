@@ -334,7 +334,7 @@ const checkoutProducts = async (req, res) => {
 
         for (const item of items) {
             const [rows] = await connection.query(
-                'SELECT id, title, price, stock_quantity, is_upcycled FROM products WHERE id = ? FOR UPDATE',
+                'SELECT id, user_id AS seller_id, title, price, stock_quantity, is_upcycled FROM products WHERE id = ? FOR UPDATE',
                 [item.id]
             );
 
@@ -355,6 +355,11 @@ const checkoutProducts = async (req, res) => {
             await connection.query(
                 `UPDATE products SET stock_quantity = ? ${statusQuery} WHERE id = ?`,
                 [newStock, item.id]
+            );
+
+            await connection.query(
+                'INSERT INTO purchases (buyer_id, seller_id, product_id, quantity, price) VALUES (?, ?, ?, ?, ?)',
+                [req.user.id, product.seller_id, item.id, item.quantity, product.price]
             );
 
             const isUpcycledBool = product.is_upcycled === true || product.is_upcycled === 'true' || product.is_upcycled === 1;
@@ -383,6 +388,32 @@ const checkoutProducts = async (req, res) => {
     }
 };
 
+// ============================================================
+// GET PURCHASED ITEMS
+// ============================================================
+const getPurchasedItems = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const [purchases] = await db.query(`
+            SELECT p.id as purchase_id, p.quantity as purchase_quantity, p.price as purchase_price, p.created_at as purchase_date,
+                   pr.id as product_id, pr.title, pr.image_url, pr.category_id, pr.type,
+                   c.name AS category_name,
+                   u.id AS seller_id, u.username AS seller_name
+            FROM purchases p
+            JOIN products pr ON p.product_id = pr.id
+            JOIN users u ON p.seller_id = u.id
+            JOIN categories c ON pr.category_id = c.id
+            WHERE p.buyer_id = ?
+            ORDER BY p.created_at DESC
+        `, [userId]);
+
+        res.json(purchases);
+    } catch (error) {
+        console.error('getPurchasedItems error:', error);
+        res.status(500).json({ message: 'Server error while fetching purchased items.' });
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
@@ -391,5 +422,6 @@ module.exports = {
     deleteProduct,
     getProductsByUser,
     getCategoriesWithCount,
-    checkoutProducts
+    checkoutProducts,
+    getPurchasedItems
 };

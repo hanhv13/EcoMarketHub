@@ -6,7 +6,8 @@
 
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getProductsByUserAPI, getCategoriesAPI, getFavoritesAPI, removeFavoriteAPI } from '../api/products'
+import { getProductsByUserAPI, getCategoriesAPI, getFavoritesAPI, removeFavoriteAPI, deleteProductAPI, getPurchasedItemsAPI } from '../api/products'
+import { createReviewAPI } from '../api/reviews'
 import { useAuth } from '../context/AuthContext'
 
 export default function MyListingsPage() {
@@ -16,16 +17,20 @@ export default function MyListingsPage() {
   const [products,   setProducts]   = useState([])
   const [categories, setCategories] = useState([])
   const [favorites,  setFavorites]  = useState([])
+  const [purchasedItems, setPurchasedItems] = useState([])
   const [loading,    setLoading]    = useState(true)
   const [favLoading, setFavLoading] = useState(false)
+  const [purchasesLoading, setPurchasesLoading] = useState(false)
   const [error,      setError]      = useState('')
   const [favError,   setFavError]   = useState('')
-  const [activeTab,  setActiveTab]  = useState('listings') // listings or favorites
+  const [activeTab,  setActiveTab]  = useState('listings') // listings, purchases or favorites
+  const [reviewModal, setReviewModal] = useState({ show: false, sellerId: null, sellerName: '', rating: 5, comment: '' })
 
   useEffect(() => {
     if (user) {
       fetchMyListings()
       fetchFavorites()
+      fetchPurchases()
       getCategoriesAPI().then(res => setCategories(res.data))
     }
   }, [user])
@@ -54,12 +59,49 @@ export default function MyListingsPage() {
     }
   }
 
+  const fetchPurchases = async () => {
+    setPurchasesLoading(true)
+    try {
+      const res = await getPurchasedItemsAPI()
+      setPurchasedItems(res.data)
+    } catch {
+      // ignore
+    } finally {
+      setPurchasesLoading(false)
+    }
+  }
+
   const handleRemoveFavorite = async (productId) => {
     try {
       await removeFavoriteAPI(productId)
       setFavorites(prev => prev.filter(f => f.id !== productId))
     } catch {
       alert('An error occurred, please try again.')
+    }
+  }
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this ad? This action cannot be undone.')) return;
+    try {
+      await deleteProductAPI(productId)
+      setProducts(prev => prev.filter(p => p.id !== productId))
+    } catch {
+      alert('Failed to delete the product. Please try again.')
+    }
+  }
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await createReviewAPI({
+        seller_id: reviewModal.sellerId,
+        rating: reviewModal.rating,
+        comment: reviewModal.comment
+      })
+      alert('Review posted successfully!')
+      setReviewModal({ show: false, sellerId: null, sellerName: '', rating: 5, comment: '' })
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to post review.')
     }
   }
 
@@ -85,6 +127,15 @@ export default function MyListingsPage() {
           }}
         >
           📋 My Listings ({products.length})
+        </button>
+        <button 
+          onClick={() => setActiveTab('purchases')} 
+          style={{
+            ...styles.tabBtn,
+            ...(activeTab === 'purchases' ? styles.activeTabBtn : {})
+          }}
+        >
+          🛍️ My Purchases ({purchasedItems.length})
         </button>
         <button 
           onClick={() => setActiveTab('favorites')} 
@@ -141,9 +192,67 @@ export default function MyListingsPage() {
 
                 {/* Nút hành động */}
                 <div style={styles.itemActions}>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="btn btn-outline" 
+                    style={{ fontSize: '13px', padding: '6px 12px', color: '#ef4444', borderColor: '#ef4444', background: 'transparent', cursor: 'pointer', borderRadius: '4px' }}>
+                    Delete
+                  </button>
+                  <Link to={`/edit-product/${product.id}`} className="btn btn-outline" style={{ fontSize: '13px', padding: '6px 12px', color: '#3b82f6', borderColor: '#3b82f6' }}>
+                    Edit
+                  </Link>
                   <Link to={`/products/${product.id}`} className="btn btn-outline" style={{ fontSize: '13px', padding: '6px 12px' }}>
                     View
                   </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : activeTab === 'purchases' ? (
+        purchasesLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}><div className="spinner"></div></div>
+        ) : purchasedItems.length === 0 ? (
+          <div className="empty-state">
+            <div className="icon">🛍️</div>
+            <p style={{ color: 'var(--text-muted)' }}>You haven't purchased anything yet.</p>
+            <Link to="/" className="btn btn-primary" style={{ marginTop: '16px' }}>
+              Start Shopping
+            </Link>
+          </div>
+        ) : (
+          <div style={styles.list}>
+            {purchasedItems.map(item => (
+              <div key={item.purchase_id} style={styles.item}>
+                <Link to={`/products/${item.product_id}`}>
+                  <img
+                    src={item.image_url || 'https://placehold.co/100x80?text=No+Img'}
+                    alt={item.title}
+                    style={styles.thumb}
+                    onError={e => { e.target.src = 'https://placehold.co/100x80?text=No+Img' }}
+                  />
+                </Link>
+                <div style={styles.itemInfo}>
+                  <Link to={`/products/${item.product_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <p style={styles.itemTitle}>{item.title}</p>
+                  </Link>
+                  <div style={styles.itemMeta}>
+                    <span style={{ color: 'var(--price-color)', fontWeight: '700' }}>{formatPrice(item.purchase_price)}</span>
+                    <span style={styles.metaTag}>Qty: {item.purchase_quantity}</span>
+                    <span style={styles.metaTag}>👤 {item.seller_name}</span>
+                    <span style={styles.metaTag}>📅 {formatDate(item.purchase_date)}</span>
+                  </div>
+                </div>
+                <div style={styles.itemActions}>
+                  {item.seller_id !== user.id && (
+                    <button
+                      className="btn btn-primary"
+                      style={{ fontSize: '13px', padding: '6px 12px' }}
+                      onClick={() => setReviewModal({ show: true, sellerId: item.seller_id, sellerName: item.seller_name, rating: 5, comment: '' })}
+                    >
+                      ⭐ Review Seller
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -208,6 +317,35 @@ export default function MyListingsPage() {
           </div>
         )
       )}
+
+      {/* Review Modal */}
+      {reviewModal.show && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h2 style={{marginTop: 0, marginBottom: '16px', fontSize: '20px'}}>Review {reviewModal.sellerName}</h2>
+            <form onSubmit={handleReviewSubmit}>
+              <div className="form-group">
+                <label>Rating (1-5)</label>
+                <input 
+                  type="number" min="1" max="5" required className="form-control"
+                  value={reviewModal.rating} onChange={e => setReviewModal({...reviewModal, rating: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Comment</label>
+                <textarea 
+                  className="form-control" rows="3" required
+                  value={reviewModal.comment} onChange={e => setReviewModal({...reviewModal, comment: e.target.value})}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button type="button" className="btn btn-gray" onClick={() => setReviewModal({...reviewModal, show: false})}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Submit Review</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -254,5 +392,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'transform 0.2s, background 0.2s',
-  }
+  },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  modalContent: { backgroundColor: '#fff', padding: '24px', borderRadius: '12px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }
 }

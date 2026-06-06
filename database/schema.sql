@@ -98,3 +98,17 @@ CREATE TABLE reviews (
     UNIQUE KEY unique_review (seller_id, reviewer_id)
 );
 
+-- 9. Tạo bảng PURCHASES (lịch sử mua hàng)
+CREATE TABLE purchases (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id    INT NOT NULL,
+    seller_id   INT NOT NULL,
+    product_id  INT NOT NULL,
+    quantity    INT DEFAULT 1,
+    price       DECIMAL(15, 0) NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_purchase_buyer FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_purchase_seller FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_purchase_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+

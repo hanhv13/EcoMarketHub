@@ -25,6 +25,10 @@ export const deleteProductAPI = (id) =>
 export const getProductsByUserAPI = (userId) =>
   api.get(`/api/products/user/${userId}`)
 
+// Lấy danh sách đồ đã mua
+export const getPurchasedItemsAPI = () =>
+  api.get('/api/products/purchases')
+
 // Get all categories
 export const getCategoriesAPI = () =>
   api.get('/api/categories')
