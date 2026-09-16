@@ -2,15 +2,13 @@
 
 A platform for buying, selling, and renting upcycled, recycled, and used items to promote a circular economy.
 
-## 📁 Project structure
+## Project structure
 
 - `database/` - MySQL schema and seed data
 - `backend/` - Node.js + Express API
 - `frontend/` - React (Vite) User Interface
 
-## 🐳 Quick start (Docker - Recommended)
-
-The easiest way to run the full stack:
+## Quick start (Docker)
 1. Ensure [Docker Desktop](https://www.docker.com/products/docker-desktop) is running.
 2. Open the terminal at the project root and run:
    ```bash
@@ -20,7 +18,7 @@ The easiest way to run the full stack:
    - **Frontend:** [http://localhost:5173](http://localhost:5173)
    - **Backend API:** [http://localhost:5000](http://localhost:5000)
 
-## 🔧 Manual setup (Without Docker)
+## Manual setup
 
 **Requirements:** Node.js v18+ and MySQL 8.0+
 
@@ -43,7 +41,7 @@ cp .env.example .env
 npm run dev
 ```
 
-## 🌟 Key features
+## Key features
 
 - **Authentication:** Secure JWT-based login and registration (User/Admin roles).
 - **Product management:** Post, edit, and delete products for sale or rent with image uploads.
@@ -51,7 +49,7 @@ npm run dev
 - **Eco-community:** Green points reward system for upcycled purchases and event browsing.
 - **Reviews:** Rate and review sellers.
 
-## 🔑 Default test accounts
+## Default test accounts
 
 - **Admin account:** `hung@example.com` | Password: `admin123`
 - **User account:** `user@example.com` | Password: `password123`
